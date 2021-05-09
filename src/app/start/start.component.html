@@ -1,0 +1,35 @@
+<div class="outer outer-padding">
+    <form [formGroup]="form">
+
+        <p class="centered">Выберите героя:</p>
+        <div class="heroes-box">
+            <div *ngIf="playerCharacter$ | async" class="heroes-box-inner">
+                <div
+                        class="hero-image nerzhul"
+                        [class]="{ selected: (playerCharacter$ | async)?.name === names.NERZHUL }"
+                        (click)="updatePlayerCharacter(names.NERZHUL)"
+                >
+                    <div class="hero-name">{{ names.NERZHUL }}</div>
+                </div>
+                <div
+                        class="hero-image guldan"
+                        [class]="{ selected: (playerCharacter$ | async)?.name === names.GULDAN }"
+                        (click)="updatePlayerCharacter(names.GULDAN)"
+                >
+                    <div class="hero-name">{{ names.GULDAN }}</div>
+                </div>
+            </div>
+        </div>
+
+        <p class="centered">
+            <button
+                    mat-raised-button
+                    color="accent"
+                    (click)="navigateToBattle()"
+            >
+                В бой!
+            </button>
+        </p>
+
+    </form>
+</div>
