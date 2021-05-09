@@ -35,6 +35,9 @@ export type InstanceOf<T> = T & {
   agility?: number;
   intellect?: number;
   stamina?: number;
+  inheritedDps: number;
+  inheritedHp: number;
+  inheritedCrit: number;
   dps: number;
   hp: number;
   crit: number;

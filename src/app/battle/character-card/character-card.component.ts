@@ -9,10 +9,10 @@ import { IBeastCharacter, IMainCharacter, InstanceOf } from '../../models/charac
 })
 export class CharacterCardComponent implements OnInit {
     @Input()
-    character: InstanceOf<IMainCharacter> | InstanceOf<IBeastCharacter> | undefined;
+    character: InstanceOf<IMainCharacter | IBeastCharacter> | null = null;
 
     @Input()
-    party: 'Вы' | 'CPU' | undefined;
+    party: 'Вы' | 'CPU' | null = null;
 
     constructor() {}
 

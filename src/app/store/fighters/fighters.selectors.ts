@@ -25,17 +25,17 @@ export const selectCharactersByProp = (state: IFightersState, { prop, value }: I
 /**
  * @description - Returns one Character or Beast found by Prop and its value.
  */
-export const selectCharacterByProp = (state: IFightersState, { prop, value }: IKeyAndValueOfCharacters): InstanceOf<IMainCharacter |IBeastCharacter> | undefined =>
-  selectAllCharacters(state).find(character => character[prop] === value);
+export const selectCharacterByProp = (state: IFightersState, { prop, value }: IKeyAndValueOfCharacters): InstanceOf<IMainCharacter |IBeastCharacter> | null =>
+  selectAllCharacters(state).find(character => character[prop] === value) ?? null;
 
 export const selectPlayerCharacter = createSelector(
   selectedFighters,
-  (state: IFightersState) => selectCharacterByProp(state, { prop: 'status', value: STATUSES.PLAYER }),
+  (state: IFightersState): InstanceOf<IMainCharacter | IBeastCharacter> | null => selectCharacterByProp(state, { prop: 'status', value: STATUSES.PLAYER }),
 );
 
 export const selectCPUCharacter = createSelector(
   selectedFighters,
-  (state: IFightersState) => selectCharacterByProp(state, { prop: 'status', value: STATUSES.CPU }),
+  (state: IFightersState): InstanceOf<IMainCharacter | IBeastCharacter> | null => selectCharacterByProp(state, { prop: 'status', value: STATUSES.CPU }),
 );
 
 export const selectPlayerBeasts = createSelector(
