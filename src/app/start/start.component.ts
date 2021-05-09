@@ -8,8 +8,10 @@ import { Subject } from 'rxjs';
 import { takeUntil, tap } from 'rxjs/operators';
 
 import { NAMES } from '../constants/name.enum';
-import { playerMoveStarted, toggleCharacters } from '../store/fighters/fighters.actions';
-import { selectCharacters, selectPlayerCharacter } from '../store/fighters/fighters.selectors';
+import { BattleService } from '../services/battle.service';
+import { gameStarted } from '../store/battle/battle.actions';
+import { toggleCharacters } from '../store/fighters/fighters.actions';
+import { selectPlayerCharacter } from '../store/fighters/fighters.selectors';
 
 
 @Component({
@@ -36,6 +38,7 @@ export class StartComponent implements OnInit, OnDestroy {
   constructor(
     private store: Store,
     private router: Router,
+    private battleService: BattleService,
   ) { }
 
   ngOnInit(): void {
@@ -60,6 +63,6 @@ export class StartComponent implements OnInit, OnDestroy {
 
   public navigateToBattle(): void {
     this.router.navigate(['battle']);
-    this.store.dispatch(playerMoveStarted());
+    this.store.dispatch(gameStarted());
   }
 }

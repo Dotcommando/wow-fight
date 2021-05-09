@@ -2,7 +2,7 @@ import { createEntityAdapter, EntityAdapter, EntityState } from '@ngrx/entity';
 import { Action, createReducer, on } from '@ngrx/store';
 
 import { ITurn } from '../../models/turn.interface';
-import { deleteBattle, turnCompleted } from './battle.actions';
+import { deleteBattle, turnStarted, turnUpdated } from './battle.actions';
 
 
 export const battleFeatureKey = 'battle';
@@ -19,8 +19,11 @@ const initialState: ITurnActivitiesState = adapter.getInitialState({
 
 const turnActivitiesReducerFn = createReducer(
   initialState,
-  on(turnCompleted,
-    (state, { turn }) => adapter.addOne(turn, state),
+  on(turnStarted,
+    (state, { turn }: { turn: ITurn }) => adapter.addOne(turn, state),
+  ),
+  on(turnUpdated,
+    (state, { turn }: { turn: ITurn }) => adapter.setOne(turn, state),
   ),
   on(deleteBattle,
     (state) => adapter.removeAll(state),
