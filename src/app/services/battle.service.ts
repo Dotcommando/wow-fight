@@ -1,12 +1,21 @@
 import { Injectable } from '@angular/core';
 
+import { Store } from '@ngrx/store';
+
 import { BehaviorSubject, Subject } from 'rxjs';
+
+import { gameEnded } from '../store/battle/battle.actions';
 
 @Injectable({
   providedIn: 'root',
 })
 export class BattleService {
-  private gameEndedSubject$ = new BehaviorSubject<boolean>(false);
+  constructor(
+    private store: Store,
+  ) {
+  }
+
+  private gameEndedSubject$ = new Subject<boolean>();
   public gameEnded$ = this.gameEndedSubject$.asObservable();
 
   private playerMoveCompletedSubject$ = new Subject<void>();
@@ -43,38 +52,55 @@ export class BattleService {
 
   public onPlayerMoveCompleted(): void {
     console.log('Player Move Completed');
+    this.randomGameEnd();
   }
 
   public onPlayerBeastsMoveStarted(): void {
     console.log('Player Beasts Move Started');
+    this.randomGameEnd();
   }
 
   public onPlayerBeastsMoveCompleted(): void {
     console.log('Player Beasts Move Completed');
+    this.randomGameEnd();
   }
 
   public onCpuMoveStarted(): void {
     console.log('CPU Move Started');
+    this.randomGameEnd();
   }
 
   public onCpuMoveCompleted(): void {
     console.log('CPU Move Completed');
+    this.randomGameEnd();
   }
 
   public onCpuBeastsMoveStarted(): void {
     console.log('CPU Beasts Move Started');
+    this.randomGameEnd();
   }
 
-  public onCpuBestsMoveCompleted(): void {
+  public onCpuBeastsMoveCompleted(): void {
     console.log('CPU Beasts Move Completed');
-    this.incrementRound();
+    this.randomGameEnd();
   }
 
   public onTurnCompleted(): void {
     console.log('Turn Completed');
+    this.incrementRound();
   }
 
-  public getGameEnded(): boolean {
-    return this.gameEndedSubject$.value;
+  public onGameEnded(): void {
+    console.log('Game Ended');
+  }
+
+  public randomGameEnd(): boolean {
+    const ended = Math.random() < 0.05;
+    if (ended) {
+      this.gameEndedSubject$.next();
+      this.store.dispatch(gameEnded());
+    }
+
+    return ended;
   }
 }

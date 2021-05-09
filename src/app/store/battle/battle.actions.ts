@@ -57,6 +57,11 @@ export const turnCompleted = createAction(
   // props<{ turn: ITurn }>(),
 );
 
+export const gameEnded = createAction(
+  `[ END ] Game Ended`,
+  // props<{ turn: ITurn }>(),
+);
+
 export const turnUpdated = createAction(
   `[ BATTLE ] Turn Updated`,
   props<{ turn: ITurn }>(),

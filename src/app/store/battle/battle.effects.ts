@@ -2,7 +2,7 @@ import { Injectable } from '@angular/core';
 
 import { Actions, createEffect, CreateEffectMetadata, ofType } from '@ngrx/effects';
 
-import { map, tap } from 'rxjs/operators';
+import { map, takeUntil, tap } from 'rxjs/operators';
 
 import { DEFAULT_TURN } from '../../constants/default-turn.constant';
 import { BattleService } from '../../services/battle.service';
@@ -11,6 +11,7 @@ import {
   cpuBeastsMoveStarted,
   cpuMoveCompleted,
   cpuMoveStarted,
+  gameEnded,
   gameStarted,
   playerBeastsMoveCompleted,
   playerBeastsMoveStarted,
@@ -34,6 +35,7 @@ export class BattleEffects {
   public cpuBeastsMoveStarted$ = this.cpuBeastsMoveStartedFn$();
   public cpuBeastsMoveCompleted$ = this.cpuBeastsMoveCompletedFn$();
   public turnCompleted$ = this.turnCompletedFn$();
+  public gameEnded$ = this.gameEndedFn$();
 
   constructor(
     private actions$: Actions,
@@ -66,6 +68,7 @@ export class BattleEffects {
       ofType(playerMoveCompleted),
       tap(() => this.battleService.onPlayerMoveCompleted()),
       map(() => playerBeastsMoveStarted()),
+      takeUntil(this.battleService.gameEnded$),
     ));
   }
 
@@ -74,6 +77,7 @@ export class BattleEffects {
       ofType(playerBeastsMoveStarted),
       tap(() => this.battleService.onPlayerBeastsMoveStarted()),
       map(() => playerBeastsMoveCompleted()),
+      takeUntil(this.battleService.gameEnded$),
     ));
   }
 
@@ -82,6 +86,7 @@ export class BattleEffects {
       ofType(playerBeastsMoveCompleted),
       tap(() => this.battleService.onPlayerBeastsMoveCompleted()),
       map(() => cpuMoveStarted()),
+      takeUntil(this.battleService.gameEnded$),
     ));
   }
 
@@ -90,6 +95,7 @@ export class BattleEffects {
       ofType(cpuMoveStarted),
       tap(() => this.battleService.onCpuMoveStarted()),
       map(() => cpuMoveCompleted()),
+      takeUntil(this.battleService.gameEnded$),
     ));
   }
 
@@ -98,6 +104,7 @@ export class BattleEffects {
       ofType(cpuMoveCompleted),
       tap(() => this.battleService.onCpuMoveCompleted()),
       map(() => cpuBeastsMoveStarted()),
+      takeUntil(this.battleService.gameEnded$),
     ));
   }
 
@@ -106,14 +113,16 @@ export class BattleEffects {
       ofType(cpuBeastsMoveStarted),
       tap(() => this.battleService.onCpuBeastsMoveStarted()),
       map(() => cpuBeastsMoveCompleted()),
+      takeUntil(this.battleService.gameEnded$),
     ));
   }
 
   private cpuBeastsMoveCompletedFn$(): CreateEffectMetadata {
     return createEffect(() => this.actions$.pipe(
       ofType(cpuBeastsMoveCompleted),
-      tap(() => this.battleService.onCpuBestsMoveCompleted()),
+      tap(() => this.battleService.onCpuBeastsMoveCompleted()),
       map(() => turnCompleted()),
+      takeUntil(this.battleService.gameEnded$),
     ));
   }
 
@@ -136,5 +145,12 @@ export class BattleEffects {
       tap(() => this.battleService.onTurnStarted()),
       map(() => playerMoveStarted()),
     ));
+  }
+
+  private gameEndedFn$(): CreateEffectMetadata {
+    return createEffect(() => this.actions$.pipe(
+      ofType(gameEnded),
+      tap(() => this.battleService.onGameEnded()),
+    ), { dispatch: false });
   }
 }
