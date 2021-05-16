@@ -1,15 +1,47 @@
 <div class="attack-outer">
-<!--    <div *ngIf="listOfPossibleAttacks && listOfPossibleAttacks.length">-->
-<!--        <mat-radio-group [formControl]="attacksControl" aria-label="Варианты атаки">-->
-<!--            <mat-radio-button-->
-<!--                    *ngFor="let attackOption of listOfPossibleAttacks"-->
-<!--                    (change)="changeAttack($event)"-->
-<!--                    [value]="attackOption"-->
-<!--            >-->
-<!--                {{ attackOption.hit ? 'Ударить по' : '' }}-->
-<!--                {{ attackOption.spell ? 'Наложить «' + attackOption.spell.spellName + '» на' : '' }}-->
-<!--                {{ attackOption.spell?.target === 'self' ? 'себя' : getEnemyName(attackOption.target) }}-->
-<!--            </mat-radio-button>-->
-<!--        </mat-radio-group>-->
-<!--    </div>-->
+    <div class="attack-options" *ngIf="attackVectors">
+        <mat-radio-group [formControl]="attacksControl" aria-label="Варианты атаки">
+            <ng-container *ngIf="attackVectors.hit">
+                <mat-radio-button
+                        *ngFor="let attackOption of attackVectors.hit"
+                        (change)="changeAttack($event)"
+                        [value]="attackOption"
+                >
+                    {{ attackOption.target?.name ? 'Ударить ' + attackOption?.target?.name : '' }}
+                </mat-radio-button>
+            </ng-container>
+
+            <ng-container *ngIf="attackVectors.cast">
+                <mat-radio-button
+                        *ngFor="let attackOption of attackVectors.cast"
+                        (change)="changeAttack($event)"
+                        [value]="attackOption"
+                >
+                    <div class="wrap-mat-radio-label">
+                        {{
+                            attackOption?.target
+                                ? 'Наложить заклятие &laquo;' + attackOption?.spell?.name + '&raquo; на ' + attackOption?.target?.name
+                                : ''
+                        }}
+                        {{
+                            attackOption?.spell?.nameOfBeast
+                                ? 'Использовать заклятие &laquo;' + attackOption?.spell?.name + '&raquo; и вызвать ' + attackOption?.spell?.nameOfBeast
+                                : ''
+                        }}
+                    </div>
+                </mat-radio-button>
+            </ng-container>
+
+            <ng-container *ngIf="attackVectors.skip">
+                <mat-radio-button
+                        (change)="changeAttack($event)"
+                        [value]="{ skip: true }"
+                >
+                    <div class="wrap-mat-radio-label">
+                        Skip the move
+                    </div>
+                </mat-radio-button>
+            </ng-container>
+        </mat-radio-group>
+    </div>
 </div>

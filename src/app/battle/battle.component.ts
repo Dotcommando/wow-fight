@@ -4,14 +4,15 @@ import { FormControl, FormGroup } from '@angular/forms';
 import { select, Store } from '@ngrx/store';
 
 import { Observable, Subject } from 'rxjs';
-import { filter, map, takeUntil, tap } from 'rxjs/operators';
+import { filter, takeUntil, tap } from 'rxjs/operators';
 
-import { DEFAULT_TURN } from '../constants/default-turn.constant';
 import { NAMES } from '../constants/name.enum';
+import { IAttackVectors } from '../models/attack-vectors.interface';
 import { IBeastCharacter, IMainCharacter, InstanceOf } from '../models/character.type';
 import { BattleService } from '../services/battle.service';
-import { gameStarted, playerMoveCompleted } from '../store/battle/battle.actions';
+import { playerMoveCompleted } from '../store/battle/battle.actions';
 import {
+  selectCharacters,
   selectCPUBeasts,
   selectCPUCharacter,
   selectPlayerBeasts,
@@ -44,6 +45,10 @@ export class BattleComponent implements OnInit, OnDestroy {
     select(selectCPUBeasts),
   );
 
+  public allEntities$: Observable<InstanceOf<IMainCharacter | IBeastCharacter>[]> = this.store.pipe(
+    select(selectCharacters),
+  );
+
   public playerCharacter!: InstanceOf<IMainCharacter>;
   public cpuCharacter!: InstanceOf<IMainCharacter>;
   public playerBeasts: InstanceOf<IBeastCharacter>[] = [];
@@ -56,6 +61,8 @@ export class BattleComponent implements OnInit, OnDestroy {
   public form: FormGroup = new FormGroup({
     playerAttacksControl: new FormControl(),
   });
+
+  public playerAttackVectors$: Observable<IAttackVectors | null> = this.battleService.playerAttackVectors$;
 
   constructor(
     private store: Store,

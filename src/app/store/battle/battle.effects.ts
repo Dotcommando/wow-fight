@@ -60,7 +60,6 @@ export class BattleEffects {
     return createEffect(() => this.actions$.pipe(
       ofType(playerMoveStarted),
       switchMap(() => this.battleService.calculateAttackVectors$),
-      tap(vectors => console.dir(vectors)),
     ), { dispatch: false });
   }
 

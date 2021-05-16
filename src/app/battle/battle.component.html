@@ -12,12 +12,12 @@
                         >
                             <div class="attack-console">
                                 <form [formGroup]="form">
-                                    <!--                            <app-attack-->
-                                    <!--                                    formControlName="playerAttacksControl"-->
-                                    <!--                                    [attackVectors]="attackService.playersAvailableAttackVectors"-->
-                                    <!--                                    [allEntities]="allEntities"-->
-                                    <!--                                    [playerCharacter]="playerCharacter$ | async"-->
-                                    <!--                            ></app-attack>-->
+                                    <app-attack
+                                        formControlName="playerAttacksControl"
+                                        [attackVectors]="playerAttackVectors$ | async"
+                                        [allEntities]="allEntities$ | async"
+                                        [playerCharacter]="playerCharacter$ | async"
+                                    ></app-attack>
                                 </form>
                             </div>
                         </app-character-card>

@@ -3,12 +3,13 @@ import { Injectable } from '@angular/core';
 import { select, Store } from '@ngrx/store';
 
 import { BehaviorSubject, combineLatest, Subject } from 'rxjs';
-import { map } from 'rxjs/operators';
+import { map, tap } from 'rxjs/operators';
 
 import { ALL_SPELLS } from '../constants/spells.constant';
 import { SPELL_TARGET, SPELLS } from '../constants/spells.enum';
 import { STATUSES } from '../constants/statuses.enum';
 import { IAttackVectorProcessing } from '../models/attack-vector-processing.interface';
+import { IAttackVectors } from '../models/attack-vectors.interface';
 import { ICastedSpell } from '../models/casted-spell.interface';
 import { IMainCharacter, InstanceOf } from '../models/character.type';
 import { CombinedFightersParties } from '../models/combined-fighter-parties.type';
@@ -25,6 +26,9 @@ export class BattleService {
   ) {
     this.filterPlayerAndCpuEnemies = this.filterPlayerAndCpuEnemies.bind(this);
   }
+
+  private playerAttackVectorsSubject$ = new BehaviorSubject<IAttackVectors | null>(null); // BehaviorSubject or it will not working
+  public playerAttackVectors$ = this.playerAttackVectorsSubject$.asObservable();
 
   private gameEndedSubject$ = new Subject<boolean>();
   public gameEnded$ = this.gameEndedSubject$.asObservable();
@@ -73,7 +77,10 @@ export class BattleService {
     attackVector.attackVector.hit = [];
 
     for (const enemy of enemies) {
-      attackVector.attackVector.hit.push({ id: enemy.id, name: enemy.name });
+      attackVector.attackVector.hit.push({
+        target: { id: enemy.id, name: enemy.name },
+        hit: true,
+      });
     }
 
     return attackVector;
@@ -115,7 +122,7 @@ export class BattleService {
             nameOfBeast: spellProto.calledBeast,
           },
         });
-      } else if (spellProto.reduceHP) {
+      } else if (spellProto.canNotCast || spellProto.canNotAttack || spellProto.reduceHP) {
         for (const enemy of enemies) {
           attackVector.attackVector.cast.push({
             target: { id: enemy.id, name: enemy.name },
@@ -148,6 +155,7 @@ export class BattleService {
       map(this.calculateSkip),
       map(this.calculateHit),
       map(this.calculateSpellCasting),
+      tap(({ attackVector }) => this.playerAttackVectorsSubject$.next(attackVector)),
     );
 
   public emitPlayerMoveCompleted(): void {
