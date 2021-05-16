@@ -47,3 +47,8 @@ export const selectCPUBeasts = createSelector(
   selectedFighters,
   (state: IFightersState) => selectCharactersByProp(state, { prop: 'status', value: STATUSES.CPUS_BEAST }),
 );
+
+export const selectParties = createSelector(
+  selectedFighters,
+  (state: IFightersState) => ({ playerPartyId: state.playerPartyId, cpuPartyId: state.cpuPartyId }),
+);

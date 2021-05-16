@@ -17,6 +17,7 @@ import { ParsePipe } from './pipes/parse.pipe';
 import { RoundPipe } from './pipes/round.pipe';
 import { StartComponent } from './start/start.component';
 import { AppStoreModule } from './store/app-store.module';
+import { AttackComponent } from './attack/attack.component';
 
 @NgModule({
   declarations: [
@@ -27,6 +28,7 @@ import { AppStoreModule } from './store/app-store.module';
     // AttackComponent,
     RoundPipe,
     ParsePipe,
+    AttackComponent,
   ],
   imports: [
     BrowserModule,

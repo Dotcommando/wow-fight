@@ -2,7 +2,7 @@ import { Injectable } from '@angular/core';
 
 import { Actions, createEffect, CreateEffectMetadata, ofType } from '@ngrx/effects';
 
-import { map, takeUntil, tap } from 'rxjs/operators';
+import { map, switchMap, takeUntil, tap } from 'rxjs/operators';
 
 import { DEFAULT_TURN } from '../../constants/default-turn.constant';
 import { BattleService } from '../../services/battle.service';
@@ -59,7 +59,8 @@ export class BattleEffects {
   private playerMoveStartedFn$(): CreateEffectMetadata {
     return createEffect(() => this.actions$.pipe(
       ofType(playerMoveStarted),
-      tap(() => this.battleService.onPlayerMoveStarted()),
+      switchMap(() => this.battleService.calculateAttackVectors$),
+      tap(vectors => console.dir(vectors)),
     ), { dispatch: false });
   }
 

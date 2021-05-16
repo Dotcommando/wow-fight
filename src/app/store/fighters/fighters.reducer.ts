@@ -121,7 +121,7 @@ const partiesReducerFn = createReducer(
       return adapter.updateMany([
         {
           id: player.id,
-          changes: { ...cpu, status: player.status, id: player.id, partyId: cpu.partyId },
+          changes: { ...cpu, status: player.status, id: player.id, partyId: player.partyId },
         },
         {
           id: cpu.id,
