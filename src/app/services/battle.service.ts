@@ -3,13 +3,13 @@ import { Injectable } from '@angular/core';
 import { select, Store } from '@ngrx/store';
 
 import { BehaviorSubject, combineLatest, Subject } from 'rxjs';
-import { map, tap } from 'rxjs/operators';
+import { map, switchMap, tap } from 'rxjs/operators';
 
 import { ALL_SPELLS } from '../constants/spells.constant';
 import { SPELL_TARGET, SPELLS } from '../constants/spells.enum';
 import { STATUSES } from '../constants/statuses.enum';
 import { IAttackVectorProcessing } from '../models/attack-vector-processing.interface';
-import { IAttackVectors } from '../models/attack-vectors.interface';
+import { AttackVector, IAttackVectors } from '../models/attack-vectors.interface';
 import { ICastedSpell } from '../models/casted-spell.interface';
 import { IMainCharacter, InstanceOf } from '../models/character.type';
 import { CombinedFightersParties } from '../models/combined-fighter-parties.type';
@@ -26,6 +26,13 @@ export class BattleService {
   ) {
     this.filterPlayerAndCpuEnemies = this.filterPlayerAndCpuEnemies.bind(this);
   }
+
+  private playerAttackVectors: IAttackVectors | null = null;
+
+  private playerAttack: AttackVector | null = null;
+
+  private playerAttackSubject$ = new BehaviorSubject<AttackVector | null>(null);
+  public playerAttack$ = this.playerAttackSubject$.asObservable();
 
   private playerAttackVectorsSubject$ = new BehaviorSubject<IAttackVectors | null>(null); // BehaviorSubject or it will not working
   public playerAttackVectors$ = this.playerAttackVectorsSubject$.asObservable();
@@ -155,12 +162,25 @@ export class BattleService {
       map(this.calculateSkip),
       map(this.calculateHit),
       map(this.calculateSpellCasting),
+      tap(({ attackVector }) => console.log(attackVector)),
+      // tap(({ attackVector }) => this.playerAttackVectors = attackVector),
       tap(({ attackVector }) => this.playerAttackVectorsSubject$.next(attackVector)),
     );
 
   public emitPlayerMoveCompleted(): void {
     this.playerMoveCompletedSubject$.next();
   }
+
+  public applyPlayerAttack = (playerAttack: AttackVector) => this.playerAttack$
+    .pipe(
+      switchMap(() => combineLatest([
+        this.fighters$,
+        this.parties$,
+      ])
+        .pipe(
+          map(_ => console.log(playerAttack)),
+        )),
+    );
 
   public incrementRound(): number {
     const nextRound = this.currentRoundSubject$.value + 1;
@@ -181,7 +201,6 @@ export class BattleService {
   }
 
   public onPlayerMoveStarted(): void {
-
     console.log('Player Move Started');
   }
 
@@ -230,12 +249,17 @@ export class BattleService {
   }
 
   public randomGameEnd(): boolean {
-    const ended = Math.random() < 0.05;
+    const ended = Math.random() < 0.01;
     if (ended) {
       this.gameEndedSubject$.next();
       this.store.dispatch(gameEnded());
     }
 
     return ended;
+  }
+
+  public setPlayerAttack(newPlayerAttack: AttackVector): void {
+    this.playerAttack = newPlayerAttack;
+    this.playerAttackSubject$.next(newPlayerAttack);
   }
 }

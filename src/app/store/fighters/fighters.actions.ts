@@ -25,39 +25,3 @@ export const removeCharacter = createAction(
 export const toggleCharacters = createAction(
   `[ PARTIES ] Toggle Characters`,
 );
-
-export const playerMoveStarted = createAction(
-  `[ PLAYER MOVE ] Started`,
-);
-
-export const playerMoveCompleted = createAction(
-  `[ PLAYER MOVE ] Completed`,
-);
-
-export const playerBeastsMoveStarted = createAction(
-  `[ PLAYER\'S BEASTS MOVE ] Started`,
-);
-
-export const playerBeastsMoveCompleted = createAction(
-  `[ PLAYER\'S BEASTS MOVE ] Completed`,
-);
-
-export const CPUMoveStarted = createAction(
-  `[ CPU MOVE ] Started`,
-);
-
-export const CPUMoveCompleted = createAction(
-  `[ CPU MOVE ] Completed`,
-);
-
-export const CPUsBeastsMoveStarted = createAction(
-  `[ CPU\'s BEASTS MOVE ] Started`,
-);
-
-export const CPUsBeastsMoveCompleted = createAction(
-  `[ CPU\'s BEASTS MOVE ] Completed`,
-);
-
-export const moveCompleted = createAction(
-  `[ MOVE ] Move Completed`,
-);

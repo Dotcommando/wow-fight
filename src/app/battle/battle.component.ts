@@ -7,7 +7,7 @@ import { Observable, Subject } from 'rxjs';
 import { filter, takeUntil, tap } from 'rxjs/operators';
 
 import { NAMES } from '../constants/name.enum';
-import { IAttackVectors } from '../models/attack-vectors.interface';
+import { AttackVector, IAttackVectors } from '../models/attack-vectors.interface';
 import { IBeastCharacter, IMainCharacter, InstanceOf } from '../models/character.type';
 import { BattleService } from '../services/battle.service';
 import { playerMoveCompleted } from '../store/battle/battle.actions';
@@ -53,6 +53,8 @@ export class BattleComponent implements OnInit, OnDestroy {
   public cpuCharacter!: InstanceOf<IMainCharacter>;
   public playerBeasts: InstanceOf<IBeastCharacter>[] = [];
   public cpuBeasts: InstanceOf<IBeastCharacter>[] = [];
+
+  private playerAttack!: AttackVector;
 
   public turnNumber = 1;
 
@@ -112,6 +114,16 @@ export class BattleComponent implements OnInit, OnDestroy {
         takeUntil(this.destroy$),
       )
       .subscribe();
+
+    // @ts-ignore
+    this.form
+      .get('playerAttacksControl')
+      .valueChanges
+      .pipe(
+        tap((playerAttack: AttackVector) => this.playerAttack = playerAttack),
+      )
+      .subscribe();
+
   }
 
   ngOnDestroy(): void {
@@ -119,6 +131,8 @@ export class BattleComponent implements OnInit, OnDestroy {
   }
 
   public turnRound(): void {
-    this.store.dispatch(playerMoveCompleted());
+    if (this.playerAttack) {
+      this.store.dispatch(playerMoveCompleted({ playerAttack: this.playerAttack }));
+    }
   }
 }

@@ -1,10 +1,12 @@
 import { Injectable } from '@angular/core';
 
 import { Actions, createEffect, CreateEffectMetadata, ofType } from '@ngrx/effects';
+import { TypedAction } from '@ngrx/store/src/models';
 
 import { map, switchMap, takeUntil, tap } from 'rxjs/operators';
 
 import { DEFAULT_TURN } from '../../constants/default-turn.constant';
+import { AttackVector } from '../../models/attack-vectors.interface';
 import { BattleService } from '../../services/battle.service';
 import {
   cpuBeastsMoveCompleted,
@@ -59,6 +61,7 @@ export class BattleEffects {
   private playerMoveStartedFn$(): CreateEffectMetadata {
     return createEffect(() => this.actions$.pipe(
       ofType(playerMoveStarted),
+      tap(() => this.battleService.onPlayerMoveStarted()),
       switchMap(() => this.battleService.calculateAttackVectors$),
     ), { dispatch: false });
   }
@@ -67,6 +70,7 @@ export class BattleEffects {
     return createEffect(() => this.actions$.pipe(
       ofType(playerMoveCompleted),
       tap(() => this.battleService.onPlayerMoveCompleted()),
+      switchMap((action: { playerAttack: AttackVector } & TypedAction<'[ PLAYER ] Move Completed'>) => this.battleService.applyPlayerAttack(action.playerAttack)),
       map(() => playerBeastsMoveStarted()),
       takeUntil(this.battleService.gameEnded$),
     ));

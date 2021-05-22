@@ -1,5 +1,6 @@
 import { createAction, props } from '@ngrx/store';
 
+import { AttackVector } from '../../models/attack-vectors.interface';
 import { ITurn } from '../../models/turn.interface';
 
 export const gameStarted = createAction(
@@ -19,7 +20,7 @@ export const playerMoveStarted = createAction(
 
 export const playerMoveCompleted = createAction(
   `[ PLAYER ] Move Completed`,
-  // props<{ turn: ITurn }>(),
+  props<{ playerAttack: AttackVector }>(),
 );
 
 export const playerBeastsMoveStarted = createAction(
