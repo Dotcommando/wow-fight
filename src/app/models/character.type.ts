@@ -1,3 +1,4 @@
+import { MOVE_STATUSES } from '../constants/move-statuses.enum';
 import { NAMES } from '../constants/name.enum';
 import { SPELLS } from '../constants/spells.enum';
 import { STATUSES } from '../constants/statuses.enum';
@@ -43,4 +44,5 @@ export type InstanceOf<T> = T & {
   crit: number;
   spellsCasted: ICastedSpell[];
   spellBound: ICastedSpell[];
+  move: MOVE_STATUSES;
 }

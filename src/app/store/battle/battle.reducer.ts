@@ -23,7 +23,7 @@ const turnActivitiesReducerFn = createReducer(
     (state, { turn }: { turn: ITurn }) => adapter.addOne(turn, state),
   ),
   on(turnUpdated,
-    (state, { turn }: { turn: ITurn }) => adapter.setOne(turn, state),
+    (state, { turn }: { turn: ITurn }) => adapter.updateOne({ id: turn.roundNumber, changes: turn }, state),
   ),
   on(deleteBattle,
     (state) => adapter.removeAll(state),

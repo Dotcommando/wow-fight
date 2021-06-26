@@ -9,12 +9,13 @@ import { ALL_SPELLS } from '../constants/spells.constant';
 import { SPELL_TARGET, SPELLS } from '../constants/spells.enum';
 import { STATUSES } from '../constants/statuses.enum';
 import { IAttackVectorProcessing } from '../models/attack-vector-processing.interface';
-import { AttackVector, IAttackVectors } from '../models/attack-vectors.interface';
+import { Attack, AttackVector, IAttackVectors, IHitAttack } from '../models/attack-vectors.interface';
 import { ICastedSpell } from '../models/casted-spell.interface';
 import { IMainCharacter, InstanceOf } from '../models/character.type';
 import { CombinedFightersParties } from '../models/combined-fighter-parties.type';
 import { IAssaulterEnemies } from '../models/player-enemies.interface';
 import { gameEnded } from '../store/battle/battle.actions';
+import { updateCharacter } from '../store/fighters/fighters.actions';
 import { selectCharacters, selectParties } from '../store/fighters/fighters.selectors';
 
 @Injectable({
@@ -87,6 +88,7 @@ export class BattleService {
       attackVector.attackVector.hit.push({
         target: { id: enemy.id, name: enemy.name },
         hit: true,
+        spell: null,
       });
     }
 
@@ -128,6 +130,7 @@ export class BattleService {
             party: SPELL_TARGET.CALL,
             nameOfBeast: spellProto.calledBeast,
           },
+          hit: false,
         });
       } else if (spellProto.canNotCast || spellProto.canNotAttack || spellProto.reduceHP) {
         for (const enemy of enemies) {
@@ -137,6 +140,7 @@ export class BattleService {
               name: spellProto.name,
               party: SPELL_TARGET.ENEMY,
             },
+            hit: false,
           });
         }
       } else if (spellProto.addHP) {
@@ -146,6 +150,7 @@ export class BattleService {
             name: spellProto.name,
             party: SPELL_TARGET.SELF,
           },
+          hit: false,
         });
       }
     }
@@ -171,14 +176,40 @@ export class BattleService {
     this.playerMoveCompletedSubject$.next();
   }
 
-  public applyPlayerAttack = (playerAttack: AttackVector) => this.playerAttack$
+  applyHit = (attack: Attack, assaulter: InstanceOf<IMainCharacter>) => ([ fighters, parties ] : CombinedFightersParties) => {
+    if (!(attack as IHitAttack)?.hit) {
+      return [ fighters, parties ];
+    }
+
+    const damage = Math.random() > assaulter.crit
+      ? assaulter.dps * 1.5
+      : assaulter.dps;
+
+    const defender = fighters.find(fighter => fighter.id === attack?.target?.id);
+
+    if (defender) {
+      console.log('defender', defender);
+      this.store.dispatch(
+        updateCharacter({
+          character: { ...defender, hp: defender.hp - damage },
+        }),
+      );
+    }
+
+    console.log(assaulter);
+    return [ fighters, parties ];
+  }
+
+  public applyPlayerAttack = (playerAttack: Attack, assaulter: InstanceOf<IMainCharacter>) => this.playerAttack$
     .pipe(
       switchMap(() => combineLatest([
         this.fighters$,
         this.parties$,
       ])
         .pipe(
-          map(_ => console.log(playerAttack)),
+          tap(_ => console.log('playerAttack', playerAttack)),
+          map((this.applyHit(playerAttack, assaulter))),
+          map(() => console.log(playerAttack)),
         )),
     );
 

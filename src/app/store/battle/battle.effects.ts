@@ -1,13 +1,12 @@
 import { Injectable } from '@angular/core';
 
 import { Actions, createEffect, CreateEffectMetadata, ofType } from '@ngrx/effects';
-import { TypedAction } from '@ngrx/store/src/models';
 
 import { map, switchMap, takeUntil, tap } from 'rxjs/operators';
 
 import { DEFAULT_TURN } from '../../constants/default-turn.constant';
-import { AttackVector } from '../../models/attack-vectors.interface';
 import { BattleService } from '../../services/battle.service';
+import { moveStarted } from '../fighters/fighters.actions';
 import {
   cpuBeastsMoveCompleted,
   cpuBeastsMoveStarted,
@@ -17,8 +16,6 @@ import {
   gameStarted,
   playerBeastsMoveCompleted,
   playerBeastsMoveStarted,
-  playerMoveCompleted,
-  playerMoveStarted,
   turnCompleted,
   turnStarted,
 } from './battle.actions';
@@ -29,7 +26,7 @@ export class BattleEffects {
   public gameStarted$ = this.gameStartedFn$();
   public turnStarted$ = this.turnStartedFn$();
   public playerMoveStarted$ = this.playerMoveStartedFn$();
-  public playerMoveCompleted$ = this.playerMoveCompletedFn$();
+  // public playerMoveCompleted$ = this.playerMoveCompletedFn$();
   public playerBeastsMoveStarted$ = this.playerBeastsMoveStartedFn$();
   public playerBeastsMoveCompleted$ = this.playerBeastsMoveCompletedFn$();
   public cpuMoveStarted$ = this.cpuMoveStartedFn$();
@@ -60,21 +57,21 @@ export class BattleEffects {
 
   private playerMoveStartedFn$(): CreateEffectMetadata {
     return createEffect(() => this.actions$.pipe(
-      ofType(playerMoveStarted),
+      ofType(moveStarted),
       tap(() => this.battleService.onPlayerMoveStarted()),
       switchMap(() => this.battleService.calculateAttackVectors$),
     ), { dispatch: false });
   }
 
-  private playerMoveCompletedFn$(): CreateEffectMetadata {
-    return createEffect(() => this.actions$.pipe(
-      ofType(playerMoveCompleted),
-      tap(() => this.battleService.onPlayerMoveCompleted()),
-      switchMap((action: { playerAttack: AttackVector } & TypedAction<'[ PLAYER ] Move Completed'>) => this.battleService.applyPlayerAttack(action.playerAttack)),
-      map(() => playerBeastsMoveStarted()),
-      takeUntil(this.battleService.gameEnded$),
-    ));
-  }
+  // private playerMoveCompletedFn$(): CreateEffectMetadata {
+  //   return createEffect(() => this.actions$.pipe(
+  //     ofType(playerMoveCompleted),
+  //     tap(() => this.battleService.onPlayerMoveCompleted()),
+  //     switchMap(({ playerAttack, assaulter }: PlayerMoveCompletedActionType) => this.battleService.applyPlayerAttack(playerAttack, assaulter)),
+  //     map(() => playerBeastsMoveStarted()),
+  //     takeUntil(this.battleService.gameEnded$),
+  //   ));
+  // }
 
   private playerBeastsMoveStartedFn$(): CreateEffectMetadata {
     return createEffect(() => this.actions$.pipe(
@@ -147,7 +144,7 @@ export class BattleEffects {
     return createEffect(() => this.actions$.pipe(
       ofType(turnStarted),
       tap(() => this.battleService.onTurnStarted()),
-      map(() => playerMoveStarted()),
+      map(() => moveStarted()),
     ));
   }
 

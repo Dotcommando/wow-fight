@@ -1,6 +1,7 @@
 import { UUID } from 'angular2-uuid';
 
 import { CHARACTERS_START_DATA } from '../constants/characters-data.constant';
+import { MOVE_STATUSES } from '../constants/move-statuses.enum';
 import { IMainCharacter, InstanceOf } from '../models/character.type';
 import { ICreateCharacterArgs } from '../models/create-characters-args.interface';
 import { calculateBasicParams } from './calculate-basic-params.helper';
@@ -13,6 +14,7 @@ export function createCharacter(
     id,
     canNotAttack,
     canNotCast,
+    priority,
   }: ICreateCharacterArgs,
 ): InstanceOf<IMainCharacter> {
   if (!id) {
@@ -27,7 +29,7 @@ export function createCharacter(
   return {
     id,
     partyId: party,
-    priority: 0,
+    priority,
     isAlive: true,
     slug,
     status,
@@ -52,5 +54,7 @@ export function createCharacter(
     canNotAttack: canNotAttack ?? false,
     canNotCast: canNotCast ?? false,
     spells: characterData.spells,
+
+    move: MOVE_STATUSES.NOT_MOVED,
   };
 }

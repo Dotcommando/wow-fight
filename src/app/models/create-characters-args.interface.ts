@@ -8,4 +8,5 @@ export interface ICreateCharacterArgs {
   status: STATUSES;
   canNotAttack: boolean;
   canNotCast: boolean;
+  priority: number;
 }

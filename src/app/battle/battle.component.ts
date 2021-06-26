@@ -7,10 +7,10 @@ import { Observable, Subject } from 'rxjs';
 import { filter, takeUntil, tap } from 'rxjs/operators';
 
 import { NAMES } from '../constants/name.enum';
-import { AttackVector, IAttackVectors } from '../models/attack-vectors.interface';
+import { IAttack, IAttackVectors } from '../models/attack-vectors.interface';
 import { IBeastCharacter, IMainCharacter, InstanceOf } from '../models/character.type';
 import { BattleService } from '../services/battle.service';
-import { playerMoveCompleted } from '../store/battle/battle.actions';
+import { moveCompleted } from '../store/fighters/fighters.actions';
 import {
   selectCharacters,
   selectCPUBeasts,
@@ -54,7 +54,7 @@ export class BattleComponent implements OnInit, OnDestroy {
   public playerBeasts: InstanceOf<IBeastCharacter>[] = [];
   public cpuBeasts: InstanceOf<IBeastCharacter>[] = [];
 
-  private playerAttack!: AttackVector;
+  private playerAttack!: IAttack;
 
   public turnNumber = 1;
 
@@ -120,7 +120,7 @@ export class BattleComponent implements OnInit, OnDestroy {
       .get('playerAttacksControl')
       .valueChanges
       .pipe(
-        tap((playerAttack: AttackVector) => this.playerAttack = playerAttack),
+        tap((playerAttack: IAttack) => this.playerAttack = playerAttack),
       )
       .subscribe();
 
@@ -132,7 +132,12 @@ export class BattleComponent implements OnInit, OnDestroy {
 
   public turnRound(): void {
     if (this.playerAttack) {
-      this.store.dispatch(playerMoveCompleted({ playerAttack: this.playerAttack }));
+      this.store.dispatch(
+        moveCompleted({
+          attack: this.playerAttack,
+          assaulter: this.playerCharacter,
+        }),
+      );
     }
   }
 }
