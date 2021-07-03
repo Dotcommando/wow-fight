@@ -5,6 +5,7 @@ import { Actions, createEffect, CreateEffectMetadata, ofType } from '@ngrx/effec
 import { map, switchMap, takeUntil, tap } from 'rxjs/operators';
 
 import { DEFAULT_TURN } from '../../constants/default-turn.constant';
+import { PHASE } from '../../constants/phase.constant';
 import { BattleService } from '../../services/battle.service';
 import { moveStarted } from '../fighters/fighters.actions';
 import {
@@ -18,11 +19,11 @@ import {
   playerBeastsMoveStarted,
   turnCompleted,
   turnStarted,
-} from './battle.actions';
+} from './turn.actions';
 
 
 @Injectable()
-export class BattleEffects {
+export class TurnEffects {
   public gameStarted$ = this.gameStartedFn$();
   public turnStarted$ = this.turnStartedFn$();
   public playerMoveStarted$ = this.playerMoveStartedFn$();
@@ -46,10 +47,12 @@ export class BattleEffects {
     return createEffect(() => this.actions$.pipe(
       ofType(gameStarted),
       tap(() => this.battleService.onGameStarted()),
-      map(() => turnStarted({
+      map(({ playerId, playerPartyId }) => turnStarted({
         turn: {
           ...DEFAULT_TURN,
           roundNumber: this.battleService.getCurrentRound(),
+          activeParty: playerPartyId,
+          movingFighter: playerId,
         },
       })),
     ));

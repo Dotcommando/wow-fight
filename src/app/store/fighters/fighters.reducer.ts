@@ -3,15 +3,19 @@ import { Action, createReducer, on } from '@ngrx/store';
 
 import { UUID } from 'angular2-uuid';
 
+import { MOVE_STATUSES } from '../../constants/move-statuses.enum';
 import { NAMES } from '../../constants/name.enum';
-import { SPELL_ANCESTRAL_SPIRIT, SPELL_FEAR, SPELL_FILTH, SPELL_REBIRTH } from '../../constants/spells.constant';
-import { SPELL_TARGET, SPELLS } from '../../constants/spells.enum';
 import { STATUSES } from '../../constants/statuses.enum';
 import { createCharacter } from '../../helpers/create-character.helper';
-import { IAttack, ISpellShort } from '../../models/attack-vectors.interface';
-import { ICastedSpell } from '../../models/casted-spell.interface';
 import { IBeastCharacter, IMainCharacter, InstanceOf } from '../../models/character.type';
-import { addCharacter, moveCompleted, removeCharacter, toggleCharacters, updateCharacter, updateCharacters } from './fighters.actions';
+import {
+  addCharacter,
+  nextFighter,
+  removeCharacter,
+  toggleCharacters,
+  updateCharacter,
+  updateCharacters,
+} from './fighters.actions';
 
 
 const playerPartyId = UUID.UUID();
@@ -42,8 +46,8 @@ const startCPUCharacter = createCharacter({
 });
 
 export interface IFightersState extends EntityState<InstanceOf<IMainCharacter | IBeastCharacter>> {
-    playerPartyId: string;
-    cpuPartyId: string;
+  playerPartyId: string;
+  cpuPartyId: string;
 }
 
 const adapter: EntityAdapter<InstanceOf<IMainCharacter | IBeastCharacter>> = createEntityAdapter({
@@ -136,150 +140,18 @@ const partiesReducerFn = createReducer(
       ], state);
     },
   ),
-  on(moveCompleted,
-    (state, { attack, assaulter }: { attack: IAttack; assaulter: InstanceOf<IMainCharacter> }) => {
-
-      if (!attack) {
-        return adapter.updateMany([], state);
-      }
-
-      const assaulterId = assaulter.id;
-      const targetId = attack?.target?.id ?? null;
-
-      if (targetId) {
-        const target: InstanceOf<IMainCharacter | IBeastCharacter> | undefined = state.entities[targetId];
-
-        if (!target) {
-          throw new Error('Target of attack not found.');
-        }
-
-        if (attack.hit) {
-          const critHappened = Math.random() > assaulter.crit;
-          const damage = assaulter.dps * (critHappened ? 1.5 : 1);
-          const resultHp = target.hp - damage;
-          const targetChanges: Partial<InstanceOf<IMainCharacter | IBeastCharacter>> = {
-            hp: resultHp >= 0 ? resultHp : 0,
-            isAlive: resultHp > 0,
-          };
-
-          return adapter.updateOne({
-            id: targetId,
-            changes: targetChanges,
-          }, state);
-        } else {
-          if (!attack.spell) {
-            throw new Error('Attack must contain a spell at this case.');
-          }
-
-          const spellShort: ISpellShort = attack.spell;
-
-          if (spellShort.party === SPELL_TARGET.ENEMY) {
-            const spellName = spellShort.name as SPELLS;
-            let duration: number = 0;
-
-            if (spellName === SPELLS.FEAR) {
-              duration = SPELL_FEAR.duration;
-            } else if (spellName === SPELLS.FILTH) {
-              duration = SPELL_FILTH.duration;
-            }
-
-            if (spellShort.name === SPELLS.FEAR) {
-              const newSpellCasted: ICastedSpell = {
-                id: UUID.UUID(),
-                spellName: spellName,
-                expiredIn: duration,
-                target: targetId,
-                assaulter: assaulterId,
-              };
-
-              const assaulterChanges: Partial<InstanceOf<IMainCharacter | IBeastCharacter>> = {
-                spellsCasted: [
-                  ...assaulter.spellsCasted,
-                  newSpellCasted,
-                ],
-              };
-
-              const targetChanges: Partial<InstanceOf<IMainCharacter | IBeastCharacter>> = {
-                spellBound: [
-                  ...target.spellBound,
-                  newSpellCasted,
-                ],
-              };
-
-              return adapter.updateMany([
-                {
-                  id: assaulterId,
-                  changes: assaulterChanges,
-                },
-                {
-                  id: targetId,
-                  changes: targetChanges,
-                },
-              ], state);
-            }
-          } else if (spellShort.party === SPELL_TARGET.SELF) {
-            const spellName = SPELLS.ANCESTRAL_SPIRIT;
-            const duration = SPELL_ANCESTRAL_SPIRIT.duration;
-
-            const newSpellCasted: ICastedSpell = {
-              id: UUID.UUID(),
-              spellName: spellName,
-              expiredIn: duration,
-              target: targetId,
-              assaulter: assaulterId,
-            };
-
-            const assaulterChanges: Partial<InstanceOf<IMainCharacter | IBeastCharacter>> = {
-              spellsCasted: [
-                ...assaulter.spellsCasted,
-                newSpellCasted,
-              ],
-              spellBound: [
-                ...target.spellBound,
-                newSpellCasted,
-              ],
-            };
-
-            return adapter.updateOne({
-              id: assaulterId,
-              changes: assaulterChanges,
-            }, state);
-          }
-        }
-      } else {
-        // There is SPELL_TARGET.CALL
-        const spellName = SPELLS.REBIRTH;
-        const duration = SPELL_REBIRTH.duration;
-
-        const newSpellCasted: ICastedSpell = {
-          id: UUID.UUID(),
-          spellName: spellName,
-          expiredIn: duration,
-          target: targetId,
-          assaulter: assaulterId,
-        };
-
-        const assaulterChanges: Partial<InstanceOf<IMainCharacter | IBeastCharacter>> = {
-          spellsCasted: [
-            ...assaulter.spellsCasted,
-            newSpellCasted,
-          ],
-        };
-
-        return adapter.updateOne({
-          id: assaulterId,
-          changes: assaulterChanges,
-        }, state);
-      }
-
-      return adapter.updateOne(
+  on(nextFighter,
+    (state, { prev, next }: { prev: string; next: string }) => adapter
+      .updateMany([
         {
-          id: assaulter.id,
-          changes: {},
+          id: prev,
+          changes: { move: MOVE_STATUSES.MOVED },
         },
-        state,
-      );
-    },
+        {
+          id: next,
+          changes: { move: MOVE_STATUSES.MOVING },
+        },
+      ], state),
   ),
 );
 

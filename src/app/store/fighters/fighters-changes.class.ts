@@ -1,10 +1,11 @@
 import { Dictionary } from '@ngrx/entity';
 
+import { SPELLS } from '../../constants/spells.enum';
 import { IAttack } from '../../models/attack-vectors.interface';
 import { ICastedSpell } from '../../models/casted-spell.interface';
 import { IBeastCharacter, IMainCharacter, InstanceOf } from '../../models/character.type';
 import { IFightersState } from './fighters.reducer';
-
+/*
 export interface IFighterClassInitializer {
   state: IFightersState;
   assaulter: InstanceOf<IMainCharacter | IBeastCharacter>;
@@ -87,7 +88,14 @@ export class FightersChanges {
   }
 
   private runSpell(fighter: InstanceOf<IMainCharacter | IBeastCharacter>, spell: ICastedSpell): IChange[] {
+    switch (spell.spellName) {
+      case SPELLS.FEAR:
+        return [
+          {
 
+          },
+        ];
+    }
   }
 
   private executeSpellsOf(id: string, fighter: InstanceOf<IMainCharacter | IBeastCharacter>): IChange[] | null {
@@ -131,3 +139,4 @@ export class FightersChanges {
     }
   }
 }
+*/

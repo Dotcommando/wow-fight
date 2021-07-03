@@ -1,9 +1,8 @@
-import { IActivity } from './activity.interface';
+import { PHASE } from '../constants/phase.constant';
 
 export interface ITurn {
   roundNumber: number;
-  player: IActivity | null;
-  cpu: IActivity | null;
-  playerBeasts: IActivity[];
-  cpuBeasts: IActivity[];
+  activeParty: string;
+  movingFighter: string;
+  phase: PHASE | null;
 }

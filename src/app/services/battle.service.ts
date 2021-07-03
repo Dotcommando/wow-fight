@@ -5,18 +5,22 @@ import { select, Store } from '@ngrx/store';
 import { BehaviorSubject, combineLatest, Subject } from 'rxjs';
 import { map, switchMap, tap } from 'rxjs/operators';
 
+import { MOVE_STATUSES } from '../constants/move-statuses.enum';
+import { PHASE } from '../constants/phase.constant';
+import { GAME_SETTINGS, PRIORITY_QUERY } from '../constants/settings.constant';
 import { ALL_SPELLS } from '../constants/spells.constant';
 import { SPELL_TARGET, SPELLS } from '../constants/spells.enum';
 import { STATUSES } from '../constants/statuses.enum';
 import { IAttackVectorProcessing } from '../models/attack-vector-processing.interface';
 import { Attack, AttackVector, IAttackVectors, IHitAttack } from '../models/attack-vectors.interface';
 import { ICastedSpell } from '../models/casted-spell.interface';
-import { IMainCharacter, InstanceOf } from '../models/character.type';
+import { IBeastCharacter, IMainCharacter, InstanceOf } from '../models/character.type';
 import { CombinedFightersParties } from '../models/combined-fighter-parties.type';
+import { IMainLoopData } from '../models/main-loop-data.interface';
 import { IAssaulterEnemies } from '../models/player-enemies.interface';
-import { gameEnded } from '../store/battle/battle.actions';
 import { updateCharacter } from '../store/fighters/fighters.actions';
 import { selectCharacters, selectParties } from '../store/fighters/fighters.selectors';
+import { gameEnded, turnChangeNextFighter, turnCompleted, turnPhaseChanging } from '../store/turn/turn.actions';
 
 @Injectable({
   providedIn: 'root',
@@ -292,5 +296,61 @@ export class BattleService {
   public setPlayerAttack(newPlayerAttack: AttackVector): void {
     this.playerAttack = newPlayerAttack;
     this.playerAttackSubject$.next(newPlayerAttack);
+  }
+
+  private findOneFittedFighter = (fighter: InstanceOf<IMainCharacter | IBeastCharacter> | undefined, next: InstanceOf<IMainCharacter | IBeastCharacter>) => {
+    if (!fighter) return next;
+    if (GAME_SETTINGS.priority === PRIORITY_QUERY.LOWEST_FIRST) {
+      return fighter.priority < next.priority
+        ? fighter
+        : next;
+    } else {
+      return fighter.priority > next.priority
+        ? fighter
+        : next;
+    }
+  };
+
+  public calculateNextFighter(currentFighterId: string, fighters: InstanceOf<IMainCharacter | IBeastCharacter>[]): InstanceOf<IMainCharacter | IBeastCharacter> {
+    const currentCharacter: InstanceOf<IMainCharacter | IBeastCharacter> | undefined = fighters.find(fighter => fighter.id === currentFighterId);
+
+    if (!currentCharacter) {
+      throw new Error('Cannot find current fighter in fighters array of the store.');
+    }
+
+    const currentParty = currentCharacter.partyId;
+    const nextOfThisParty = fighters.filter(fighter => fighter.partyId === currentParty && fighter.move === MOVE_STATUSES.NOT_MOVED);
+
+    if (nextOfThisParty.length) {
+      return nextOfThisParty.reduce(this.findOneFittedFighter);
+    }
+
+    const nextFromAnotherParty = fighters.filter(fighter => fighter.partyId !== currentParty && fighter.move === MOVE_STATUSES.NOT_MOVED);
+
+    return nextFromAnotherParty.reduce(this.findOneFittedFighter);
+  }
+
+  public switchToNextStep(stepData: IMainLoopData): void {
+    if (!stepData.phase) {
+      return;
+    }
+
+    const { turn, phase, spells, assaulterId, fighters, partiesIds  } = stepData;
+
+    // Смена хода происходит внутри хода одного бойца.
+    // if ([ PHASE.BEFORE_MOVE, PHASE.MOVING ].includes(phase)) {
+    //   return phase === PHASE.BEFORE_MOVE
+    //     ? this.store.dispatch(turnPhaseChanging({ phase: PHASE.MOVING }))
+    //     : this.store.dispatch(turnPhaseChanging({ phase: PHASE.AFTER_MOVE }));
+    // }
+    //
+    // // Все бойцы сходили, смена хода.
+    // if (fighters.every(fighter => fighter.move === MOVE_STATUSES.MOVED)) {
+    //   this.store.dispatch(turnCompleted()); // ====> effect turnCompleted ===> effect turnChangeNextFighter ===> effect nextFighter
+    // }
+    //
+    // // Смена бойца, то есть смена фазы PHASE.AFTER_MOVE одного бойца на PHASE.BEFORE_MOVE другого бойца внутри хода
+    // const nextFighterInstance = this.calculateNextFighter(assaulterId, fighters);
+    // this.store.dispatch(turnChangeNextFighter({ nextFighter: nextFighterInstance.id, nextPartyId: nextFighterInstance.partyId }));
   }
 }

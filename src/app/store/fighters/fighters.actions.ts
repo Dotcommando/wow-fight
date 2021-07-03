@@ -4,27 +4,32 @@ import { IAttack } from '../../models/attack-vectors.interface';
 import { IBeastCharacter, IMainCharacter, InstanceOf } from '../../models/character.type';
 
 export const addCharacter = createAction(
-  `[ PARTIES ] Add One`,
+  `[ FIGHTERS ] Add One`,
   props< { character: InstanceOf<IMainCharacter | IBeastCharacter> }>(),
 );
 
 export const updateCharacter = createAction(
-  `[ PARTIES ] Update One`,
+  `[ FIGHTERS ] Update One`,
   props< { character: InstanceOf<IMainCharacter | IBeastCharacter> }>(),
 );
 
 export const updateCharacters = createAction(
-  `[ PARTIES ] Update Many`,
+  `[ FIGHTERS ] Update Many`,
   props< { characters: InstanceOf<IMainCharacter | IBeastCharacter>[] }>(),
 );
 
+export const nextFighter = createAction(
+  `[ FIGHTERS ] Next character is active`,
+  props< { prev: string; next: string } >(),
+);
+
 export const removeCharacter = createAction(
-  `[ PARTIES ] Remove One`,
+  `[ FIGHTERS ] Remove One`,
   props< { characterId: string }>(),
 );
 
 export const toggleCharacters = createAction(
-  `[ PARTIES ] Toggle Characters`,
+  `[ FIGHTERS ] Toggle Characters`,
 );
 
 export const moveStarted = createAction(

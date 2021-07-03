@@ -8,10 +8,10 @@ import { Subject } from 'rxjs';
 import { takeUntil, tap } from 'rxjs/operators';
 
 import { NAMES } from '../constants/name.enum';
-import { BattleService } from '../services/battle.service';
-import { gameStarted } from '../store/battle/battle.actions';
+import { IBeastCharacter, IMainCharacter, InstanceOf } from '../models/character.type';
 import { toggleCharacters } from '../store/fighters/fighters.actions';
-import { selectPlayerCharacter } from '../store/fighters/fighters.selectors';
+import { selectParties, selectPlayerCharacter } from '../store/fighters/fighters.selectors';
+import { gameStarted } from '../store/turn/turn.actions';
 
 
 @Component({
@@ -31,20 +31,35 @@ export class StartComponent implements OnInit, OnDestroy {
     select(selectPlayerCharacter),
   );
 
+  public parties$ = this.store.pipe(
+    select(selectParties),
+  );
+
   public playerCharacterName: NAMES | undefined;
+
+  private playerPartyId!: string;
+  private playerId!: string;
 
   private destroy$ = new Subject<void>();
 
   constructor(
     private store: Store,
     private router: Router,
-    private battleService: BattleService,
   ) { }
 
   ngOnInit(): void {
+    this.parties$
+      .pipe(
+        tap(({ playerPartyId }: { playerPartyId: string }) => this.playerPartyId = playerPartyId),
+        takeUntil(this.destroy$),
+      )
+      .subscribe();
+
     this.playerCharacter$
       .pipe(
-        tap(char => console.log('player', char)),
+        tap((player: InstanceOf<IMainCharacter | IBeastCharacter> | null) => {
+          if (player) this.playerId = player.id;
+        }),
         takeUntil(this.destroy$),
       )
       .subscribe();
@@ -52,6 +67,7 @@ export class StartComponent implements OnInit, OnDestroy {
 
   ngOnDestroy(): void {
     this.destroy$.next();
+    this.destroy$.complete();
   }
 
   public updatePlayerCharacter(name: NAMES): void {
@@ -63,6 +79,6 @@ export class StartComponent implements OnInit, OnDestroy {
 
   public navigateToBattle(): void {
     this.router.navigate(['battle']);
-    this.store.dispatch(gameStarted());
+    this.store.dispatch(gameStarted({ playerId: this.playerId, playerPartyId: this.playerPartyId }));
   }
 }

@@ -3,21 +3,27 @@ import { FormControl, FormGroup } from '@angular/forms';
 
 import { select, Store } from '@ngrx/store';
 
-import { Observable, Subject } from 'rxjs';
-import { filter, takeUntil, tap } from 'rxjs/operators';
+import { BehaviorSubject, combineLatest, NEVER, Observable, Subject } from 'rxjs';
+import { filter, map, scan, take, takeUntil, tap } from 'rxjs/operators';
 
 import { NAMES } from '../constants/name.enum';
+import { PHASE, PHASES } from '../constants/phase.constant';
 import { IAttack, IAttackVectors } from '../models/attack-vectors.interface';
+import { ICastedSpell } from '../models/casted-spell.interface';
 import { IBeastCharacter, IMainCharacter, InstanceOf } from '../models/character.type';
+import { IPartiesIds } from '../models/parties-ids.interface';
+import { ITurn } from '../models/turn.interface';
 import { BattleService } from '../services/battle.service';
 import { moveCompleted } from '../store/fighters/fighters.actions';
 import {
   selectCharacters,
   selectCPUBeasts,
-  selectCPUCharacter,
+  selectCPUCharacter, selectParties,
   selectPlayerBeasts,
   selectPlayerCharacter,
 } from '../store/fighters/fighters.selectors';
+import { selectSpells } from '../store/spells/spells.selectors';
+import { selectCurrentTurn, selectTurns } from '../store/turn/turn.selectors';
 
 
 @Component({
@@ -45,8 +51,24 @@ export class BattleComponent implements OnInit, OnDestroy {
     select(selectCPUBeasts),
   );
 
-  public allEntities$: Observable<InstanceOf<IMainCharacter | IBeastCharacter>[]> = this.store.pipe(
+  public allFighters$: Observable<InstanceOf<IMainCharacter | IBeastCharacter>[]> = this.store.pipe(
     select(selectCharacters),
+  );
+
+  public turns$: Observable<ITurn[]> = this.store.pipe(
+    select(selectTurns),
+  );
+
+  public spells$: Observable<ICastedSpell[]> = this.store.pipe(
+    select(selectSpells),
+  );
+
+  public currentTurn$: Observable<ITurn> = this.store.pipe(
+    select(selectCurrentTurn),
+  );
+
+  public partiesIds$: Observable<IPartiesIds> = this.store.pipe(
+    select(selectParties),
   );
 
   public playerCharacter!: InstanceOf<IMainCharacter>;
@@ -66,50 +88,91 @@ export class BattleComponent implements OnInit, OnDestroy {
 
   public playerAttackVectors$: Observable<IAttackVectors | null> = this.battleService.playerAttackVectors$;
 
+  private newTurnHasStartedSubject$ = new BehaviorSubject<ITurn | null>(null);
+  public newTurnHasStarted$ = this.newTurnHasStartedSubject$.asObservable();
+
+  private newPhaseHasStartedSubject$ = new BehaviorSubject<PHASE | null>(null);
+  public newPhaseHasStarted$ = this.newPhaseHasStartedSubject$.asObservable();
+
+  private currentFighterIdSubject$ = new BehaviorSubject<string | null>(null);
+  public currentFighterId$ = this.currentFighterIdSubject$.asObservable();
+
+  private firstTurn = true;
+
   constructor(
     private store: Store,
     private battleService: BattleService,
   ) { }
 
-  // eslint-disable-next-line @angular-eslint/no-empty-lifecycle-method
   ngOnInit(): void {
-    this.playerCharacter$
+    this.newTurnHasStarted$
       .pipe(
-        filter((character: InstanceOf<IMainCharacter | IBeastCharacter> | null) => !!character),
-        tap((character: InstanceOf<IMainCharacter | IBeastCharacter> | null) => {
-          if (character) {
-            this.playerCharacter = character as InstanceOf<IMainCharacter>;
+        filter((turn: ITurn | null) => Boolean(turn)),
+        tap((turn: ITurn | null) => this.currentFighterIdSubject$.next(turn?.movingFighter as string)),
+        tap((newTurn: ITurn | null) => console.log('New turn:', newTurn)),
+        takeUntil(this.destroy$),
+      )
+      .subscribe();
+
+    combineLatest([
+      this.currentTurn$,
+      this.newPhaseHasStarted$,
+      this.spells$,
+      this.currentFighterId$,
+      this.allFighters$,
+      this.partiesIds$,
+    ])
+      .pipe(
+        filter(([ turn, phase, spells, assaulterId, fighters, partiesIds ]) => !!assaulterId && [ null, PHASE.BEFORE_MOVE, PHASE.AFTER_MOVE ].includes(phase)),
+        map((dataArray) => {
+          const [ turn, phase, spells, assaulterId, fighters, partiesIds ] = dataArray;
+          if (phase === PHASE.MOVING && assaulterId === partiesIds.playerPartyId) {
+            return NEVER;
+          }
+
+          if (!spells.length && phase && [ PHASE.BEFORE_MOVE, PHASE.AFTER_MOVE ].includes(phase)) {
+            // @ts-ignore
+            this.battleService.switchToNextStep({ turn, phase, spells, assaulterId, fighters, partiesIds });
+          }
+
+          return dataArray;
+        }),
+        take(6),
+        takeUntil(this.destroy$),
+      )
+      .subscribe();
+
+    this.turns$
+      .pipe(
+        tap((turns: ITurn[]) => {
+          if (this.firstTurn) {
+            this.firstTurn = false;
+            this.newTurnHasStartedSubject$.next(turns[turns.length - 1]);
+            this.newPhaseHasStartedSubject$.next(turns[turns.length - 1].phase);
+            this.currentFighterIdSubject$.next(turns[turns.length - 1].movingFighter);
           }
         }),
-        takeUntil(this.destroy$),
-      )
-      .subscribe();
+        scan((prevTurns: ITurn[], currentTurns: ITurn[]) => {
+          console.log(' ');
+          console.log('====================');
+          console.log('prev', prevTurns);
+          console.log('next', currentTurns);
 
-    this.cpuCharacter$
-      .pipe(
-        filter((character: InstanceOf<IMainCharacter | IBeastCharacter> | null) => !!character),
-        tap((character: InstanceOf<IMainCharacter | IBeastCharacter> | null) => {
-          if (character) {
-            this.cpuCharacter = character as InstanceOf<IMainCharacter>;
+          if (prevTurns.length < currentTurns.length) {
+            this.newTurnHasStartedSubject$.next(currentTurns[currentTurns.length - 1]);
+            this.newPhaseHasStartedSubject$.next(currentTurns[currentTurns.length - 1].phase);
+            this.currentFighterIdSubject$.next(currentTurns[currentTurns.length - 1].movingFighter);
           }
-        }),
-        takeUntil(this.destroy$),
-      )
-      .subscribe();
 
-    this.playerBeasts$
-      .pipe(
-        tap((characters: InstanceOf<IMainCharacter | IBeastCharacter>[]) => {
-          this.playerBeasts = characters as InstanceOf<IBeastCharacter>[]  ?? [];
-        }),
-        takeUntil(this.destroy$),
-      )
-      .subscribe();
+          if (prevTurns[prevTurns.length - 1].phase !== currentTurns[currentTurns.length - 1].phase) {
+            this.newPhaseHasStartedSubject$.next(currentTurns[currentTurns.length - 1].phase);
+          }
 
-    this.cpuBeasts$
-      .pipe(
-        tap((characters: InstanceOf<IMainCharacter | IBeastCharacter>[]) => {
-          this.cpuBeasts = characters as InstanceOf<IBeastCharacter>[] ?? [];
+          if (prevTurns[prevTurns.length - 1].movingFighter !== currentTurns[currentTurns.length - 1].movingFighter) {
+            this.currentFighterIdSubject$.next(currentTurns[currentTurns.length - 1].movingFighter);
+          }
+
+          return currentTurns;
         }),
         takeUntil(this.destroy$),
       )

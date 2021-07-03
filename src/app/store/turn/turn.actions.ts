@@ -1,16 +1,35 @@
 import { createAction, props } from '@ngrx/store';
 
-import { Attack, IAttack } from '../../models/attack-vectors.interface';
-import { IMainCharacter, InstanceOf } from '../../models/character.type';
+import { PHASE } from '../../constants/phase.constant';
 import { ITurn } from '../../models/turn.interface';
 
 export const gameStarted = createAction(
   `[ START ] Game Started`,
+  props<{ playerId: string; playerPartyId: string }>(),
 );
 
 export const turnStarted = createAction(
   `[ TURN ] Started`,
   props<{ turn: ITurn }>(),
+);
+
+export const turnPhaseChanging = createAction(
+  `[ TURN ] Phase changing`,
+  props<{ phase: PHASE }>(),
+);
+
+export const turnActiveFighterChanging = createAction(
+  `[ TURN ] Change active fighter`,
+  props<{ activeFighterId: string }>(),
+);
+
+export const nextTurn = createAction(
+  `[ TURN ] Next turn`,
+);
+
+export const turnChangeNextFighter = createAction(
+  `[ TURN ] Change active fighter`,
+  props<{ nextFighter: string; nextPartyId: string }>(),
 );
 
 export const playerBeastsMoveStarted = createAction(

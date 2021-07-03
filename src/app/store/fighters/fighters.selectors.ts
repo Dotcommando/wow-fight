@@ -19,13 +19,13 @@ export const selectCharacters = createSelector(
 /**
  * @description - Returns all Characters and Beasts filtered by Prop and its value.
  */
-export const selectCharactersByProp = (state: IFightersState, { prop, value }: IKeyAndValueOfCharacters): Array<InstanceOf<IMainCharacter |IBeastCharacter>> =>
+export const selectCharactersByProp = (state: IFightersState, { prop, value }: IKeyAndValueOfCharacters): Array<InstanceOf<IMainCharacter | IBeastCharacter>> =>
   selectAllCharacters(state).filter(character => character[ prop ] === value);
 
 /**
  * @description - Returns one Character or Beast found by Prop and its value.
  */
-export const selectCharacterByProp = (state: IFightersState, { prop, value }: IKeyAndValueOfCharacters): InstanceOf<IMainCharacter |IBeastCharacter> | null =>
+export const selectCharacterByProp = (state: IFightersState, { prop, value }: IKeyAndValueOfCharacters): InstanceOf<IMainCharacter | IBeastCharacter> | null =>
   selectAllCharacters(state).find(character => character[prop] === value) ?? null;
 
 export const selectPlayerCharacter = createSelector(

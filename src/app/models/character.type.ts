@@ -44,5 +44,5 @@ export type InstanceOf<T> = T & {
   crit: number;
   spellsCasted: ICastedSpell[];
   spellBound: ICastedSpell[];
-  move: MOVE_STATUSES;
+  move: MOVE_STATUSES | null;
 }
