@@ -4,10 +4,12 @@ import { FormControl, FormGroup } from '@angular/forms';
 import { select, Store } from '@ngrx/store';
 
 import { BehaviorSubject, combineLatest, NEVER, Observable, Subject } from 'rxjs';
-import { filter, map, scan, take, takeUntil, tap } from 'rxjs/operators';
+import { distinctUntilChanged, filter, map, scan, take, takeUntil, tap } from 'rxjs/operators';
 
 import { NAMES } from '../constants/name.enum';
 import { PHASE, PHASES } from '../constants/phase.constant';
+import { compareObjects } from '../helpers/compare-arrays-of-any.helper';
+import { compareITurnArrays } from '../helpers/compare-iturn-arrays.helper';
 import { IAttack, IAttackVectors } from '../models/attack-vectors.interface';
 import { ICastedSpell } from '../models/casted-spell.interface';
 import { IBeastCharacter, IMainCharacter, InstanceOf } from '../models/character.type';
@@ -124,7 +126,12 @@ export class BattleComponent implements OnInit, OnDestroy {
     ])
       .pipe(
         filter(([ turn, phase, spells, assaulterId, fighters, partiesIds ]) => !!assaulterId && [ null, PHASE.BEFORE_MOVE, PHASE.AFTER_MOVE ].includes(phase)),
+        // @ts-ignore
+        distinctUntilChanged(compareObjects),
+        // map((dataArray: Iterable<{ 0: ITurn; 1: PHASE; 2: ICastedSpell[]; 3: string; 4: InstanceOf<IMainCharacter | IBeastCharacter>; 5: { cpuPartyId: string; playerPartyId: string } }>) => {
         map((dataArray) => {
+
+          // @ts-ignore
           const [ turn, phase, spells, assaulterId, fighters, partiesIds ] = dataArray;
           if (phase === PHASE.MOVING && assaulterId === partiesIds.playerPartyId) {
             return NEVER;
@@ -152,6 +159,7 @@ export class BattleComponent implements OnInit, OnDestroy {
             this.currentFighterIdSubject$.next(turns[turns.length - 1].movingFighter);
           }
         }),
+        distinctUntilChanged(compareITurnArrays),
         scan((prevTurns: ITurn[], currentTurns: ITurn[]) => {
           console.log(' ');
           console.log('====================');

@@ -1,6 +1,5 @@
 import { createFeatureSelector, createSelector } from '@ngrx/store';
 
-import { ITurn } from '../../models/turn.interface';
 import { ITurnState, selectAllTurns, turnFeatureKey } from './turn.reducer';
 
 export const selectedTurns = createFeatureSelector<ITurnState>(turnFeatureKey);

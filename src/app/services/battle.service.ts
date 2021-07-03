@@ -338,19 +338,19 @@ export class BattleService {
     const { turn, phase, spells, assaulterId, fighters, partiesIds  } = stepData;
 
     // Смена хода происходит внутри хода одного бойца.
-    // if ([ PHASE.BEFORE_MOVE, PHASE.MOVING ].includes(phase)) {
-    //   return phase === PHASE.BEFORE_MOVE
-    //     ? this.store.dispatch(turnPhaseChanging({ phase: PHASE.MOVING }))
-    //     : this.store.dispatch(turnPhaseChanging({ phase: PHASE.AFTER_MOVE }));
-    // }
-    //
-    // // Все бойцы сходили, смена хода.
-    // if (fighters.every(fighter => fighter.move === MOVE_STATUSES.MOVED)) {
-    //   this.store.dispatch(turnCompleted()); // ====> effect turnCompleted ===> effect turnChangeNextFighter ===> effect nextFighter
-    // }
-    //
-    // // Смена бойца, то есть смена фазы PHASE.AFTER_MOVE одного бойца на PHASE.BEFORE_MOVE другого бойца внутри хода
-    // const nextFighterInstance = this.calculateNextFighter(assaulterId, fighters);
-    // this.store.dispatch(turnChangeNextFighter({ nextFighter: nextFighterInstance.id, nextPartyId: nextFighterInstance.partyId }));
+    if ([ PHASE.BEFORE_MOVE, PHASE.MOVING ].includes(phase)) {
+      return phase === PHASE.BEFORE_MOVE
+        ? this.store.dispatch(turnPhaseChanging({ phase: PHASE.MOVING }))
+        : this.store.dispatch(turnPhaseChanging({ phase: PHASE.AFTER_MOVE }));
+    }
+
+    // Все бойцы сходили, смена хода.
+    if (fighters.every(fighter => fighter.move === MOVE_STATUSES.MOVED)) {
+      this.store.dispatch(turnCompleted()); // ====> effect turnCompleted ===> effect turnChangeNextFighter ===> effect nextFighter
+    }
+
+    // Смена бойца, то есть смена фазы PHASE.AFTER_MOVE одного бойца на PHASE.BEFORE_MOVE другого бойца внутри хода
+    const nextFighterInstance = this.calculateNextFighter(assaulterId, fighters);
+    this.store.dispatch(turnChangeNextFighter({ nextFighter: nextFighterInstance.id, nextPartyId: nextFighterInstance.partyId }));
   }
 }

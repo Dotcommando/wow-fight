@@ -18,7 +18,7 @@
       "@store/*": ["app/store/*"]
     },
     "forceConsistentCasingInFileNames": true,
-    "strict": true,
+    "strict": false,
     "noImplicitReturns": true,
     "noFallthroughCasesInSwitch": true,
     "sourceMap": true,
@@ -32,7 +32,8 @@
     "lib": [
       "es2018",
       "dom"
-    ]
+    ],
+    "suppressImplicitAnyIndexErrors": true
   },
   "angularCompilerOptions": {
     "enableI18nLegacyMessageIdFormat": false,
