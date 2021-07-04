@@ -186,6 +186,28 @@ export class BattleComponent implements OnInit, OnDestroy {
       )
       .subscribe();
 
+    this.playerCharacter$
+      .pipe(
+        tap((playerCharacter: InstanceOf<IMainCharacter | IBeastCharacter> | null) => {
+          if (playerCharacter) {
+            this.playerCharacter = playerCharacter as InstanceOf<IMainCharacter>;
+          }
+        }),
+        takeUntil(this.destroy$),
+      )
+      .subscribe();
+
+    this.cpuCharacter$
+      .pipe(
+        tap((cpuCharacter: InstanceOf<IMainCharacter | IBeastCharacter> | null) => {
+          if (cpuCharacter) {
+            this.cpuCharacter = cpuCharacter as InstanceOf<IMainCharacter>;
+          }
+        }),
+        takeUntil(this.destroy$),
+      )
+      .subscribe();
+
     // @ts-ignore
     this.form
       .get('playerAttacksControl')
