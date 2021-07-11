@@ -5,7 +5,7 @@ import { UUID } from 'angular2-uuid';
 
 import { ALL_SPELLS } from '../../constants/spells.constant';
 import { SPELLS } from '../../constants/spells.enum';
-import { IAttackState, ISpellShort } from '../../models/attack-vectors.interface';
+import { ISpellShort } from '../../models/attack-vectors.interface';
 import { ICastedSpell } from '../../models/casted-spell.interface';
 import { addSpell, removeSpell, updateSpell } from './spells.actions';
 

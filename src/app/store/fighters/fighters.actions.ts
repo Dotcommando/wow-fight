@@ -2,6 +2,7 @@ import { createAction, props } from '@ngrx/store';
 
 import { IAttack } from '../../models/attack-vectors.interface';
 import { IBeastCharacter, IMainCharacter, InstanceOf } from '../../models/character.type';
+import { ICastedSpell } from '../../models/casted-spell.interface';
 
 export const addCharacter = createAction(
   `[ FIGHTERS ] Add One`,
@@ -40,4 +41,9 @@ export const fighterHasStartedMove = createAction(
 export const fighterHasCompletedMove = createAction(
   `[ FIGHTERS ] Move Completed`,
   props<{ attack: IAttack; assaulter: InstanceOf<IMainCharacter> }>(),
+);
+
+export const applySpellToCharacter = createAction(
+  `[ FIGHTERS ] Apply Spell to Fighter`,
+  props<{ fighterId: string; spell: ICastedSpell }>(),
 );

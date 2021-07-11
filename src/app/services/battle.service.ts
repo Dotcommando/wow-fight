@@ -18,7 +18,7 @@ import { IBeastCharacter, IMainCharacter, InstanceOf } from '../models/character
 import { CombinedFightersParties } from '../models/combined-fighter-parties.type';
 import { IMainLoopData } from '../models/main-loop-data.interface';
 import { IAssaulterEnemies } from '../models/player-enemies.interface';
-import { ITurnState } from '../models/turn.interface';
+import { ISpellsLoopData } from '../models/spells-loop-data.interface';
 import { updateCharacter } from '../store/fighters/fighters.actions';
 import { selectCharacters, selectParties } from '../store/fighters/fighters.selectors';
 import { selectSpells } from '../store/spells/spells.selectors';
@@ -53,12 +53,7 @@ export class BattleService {
   private currentRoundSubject$ = new BehaviorSubject<number>(1);
   public currentRound$ = this.currentRoundSubject$.asObservable();
 
-  private spellsLoopSubject$ = new Subject<{
-    characters: InstanceOf<IMainCharacter | IBeastCharacter>[];
-    parties: { playerPartyId: string; cpuPartyId: string };
-    spells: ICastedSpell[];
-    currentTurn: ITurnState;
-  }>();
+  private spellsLoopSubject$ = new Subject<ISpellsLoopData>();
   public spellsLoop$ = this.spellsLoopSubject$.asObservable();
 
   private fighters$ = this.store.pipe(
@@ -324,12 +319,7 @@ export class BattleService {
     // this.store.dispatch(turnChangeNextFighter({ nextFighter: nextFighterInstance.id, nextPartyId: nextFighterInstance.partyId }));
   }
 
-  public pushSpellsLoop(spellsLoopData: {
-    characters: InstanceOf<IMainCharacter | IBeastCharacter>[];
-    parties: { playerPartyId: string; cpuPartyId: string };
-    spells: ICastedSpell[];
-    currentTurn: ITurnState;
-  }): void {
+  public pushSpellsLoop(spellsLoopData: ISpellsLoopData): void {
     this.spellsLoopSubject$.next(spellsLoopData);
   }
 }

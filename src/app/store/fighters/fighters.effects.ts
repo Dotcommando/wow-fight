@@ -12,7 +12,7 @@ import { IBeastCharacter, IMainCharacter, InstanceOf } from '../../models/charac
 import { CombinedFightersParties } from '../../models/combined-fighter-parties.type';
 import { BattleService } from '../../services/battle.service';
 import { addSpell } from '../spells/spells.actions';
-import { phaseBeforeMove, phaseMoving } from '../turn/turn.actions';
+import { phaseBeforeMove, phaseMoving, turnStarted } from '../turn/turn.actions';
 import { fighterHasCompletedMove, fighterHasStartedMove, nextFighter, updateCharacter } from './fighters.actions';
 import { selectCharacters, selectParties } from './fighters.selectors';
 

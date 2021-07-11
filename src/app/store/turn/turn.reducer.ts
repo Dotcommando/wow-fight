@@ -6,7 +6,7 @@ import {
   phaseAfterMove,
   phaseBeforeMove,
   phaseMoving,
-  turnActiveFighterChanging,
+  turnChangeNextFighter,
   turnStarted,
 } from './turn.actions';
 
@@ -14,7 +14,7 @@ import {
 export const turnFeatureKey = 'turn';
 
 const initialState: ITurnState = {
-  roundNumber: 1,
+  roundNumber: 0,
   activeParty: '',
   movingFighter: '',
   phase: null,
@@ -37,12 +37,8 @@ const turnActivitiesReducerFn = createReducer(
     phaseAfterMove,
     (state) => ({ ...state, phase: PHASE.AFTER_MOVE }),
   ),
-  on(turnActiveFighterChanging,
-    (state, { activeFighterId, activePartyId }: { activeFighterId: string; activePartyId: string }) => ({
-      ...state,
-      movingFighter: activeFighterId,
-      activePartyId,
-    }),
+  on(turnChangeNextFighter,
+    (state, { nextFighter, nextPartyId }) => ({ ...state, movingFighter: nextFighter, activeParty: nextPartyId }),
   ),
 );
 

@@ -11,7 +11,7 @@ import { PHASE } from '../constants/phase.constant';
 import { STATUSES } from '../constants/statuses.enum';
 import { compareObjects } from '../helpers/compare-arrays-of-any.helper';
 import { IAttack, IAttackVectors, ICharacterShort } from '../models/attack-vectors.interface';
-import { ICastedSpell } from '../models/casted-spell.interface';
+import { ICastedSpell, STAGE, STAGE_OF } from '../models/casted-spell.interface';
 import { IBeastCharacter, IMainCharacter, InstanceOf } from '../models/character.type';
 import { IPartiesIds } from '../models/parties-ids.interface';
 import { ITurnState } from '../models/turn.interface';
@@ -25,8 +25,10 @@ import {
   selectPlayerBeasts,
   selectPlayerCharacter,
 } from '../store/fighters/fighters.selectors';
+import { addSpell, executeHit } from '../store/spells/spells.actions';
 import { selectSpells } from '../store/spells/spells.selectors';
 import { selectCurrentPhase, selectRoundNumber, selectTurn } from '../store/turn/turn.selectors';
+import { applySpellToCharacter } from '../store/fighters/fighters.actions';
 
 
 @Component({
@@ -154,6 +156,44 @@ export class BattleComponent implements OnInit, OnDestroy {
     this.battleService.spellsLoop$
       .pipe(
         tap((data) => console.log('spellsLoopData', data)),
+        tap(({ characters, parties, spells, currentTurn, attack }) => {
+          if (attack.spell) {
+            return this.store.dispatch(addSpell({ attack }));
+          }
+
+          let spellsToExec: ICastedSpell[];
+
+          if (currentTurn.phase === PHASE.BEFORE_MOVE) {
+            spellsToExec = spells.filter(spell =>
+              // If casted by assaulter
+              (!spell.firedInThisTurn
+              && (spell.fireOnStage === STAGE.BEFORE_MOVE && spell.stageOf === STAGE_OF.ASSAULTER)
+              && spell.assaulter === currentTurn.movingFighter)
+              || (
+                // if moving fighter is target
+                !spell.firedInThisTurn
+                && (spell.fireOnStage === STAGE.BEFORE_MOVE && spell.stageOf === STAGE_OF.TARGET)
+                && spell.target === currentTurn.movingFighter));
+          } else if (currentTurn.phase === PHASE.AFTER_MOVE) {
+            spellsToExec = spells.filter(spell =>
+              // If casted by assaulter
+              (!spell.firedInThisTurn
+                && (spell.fireOnStage === STAGE.AFTER_MOVE && spell.stageOf === STAGE_OF.ASSAULTER)
+                && spell.assaulter === currentTurn.movingFighter)
+              || (
+                // if moving fighter is target
+                !spell.firedInThisTurn
+              && (spell.fireOnStage === STAGE.AFTER_MOVE && spell.stageOf === STAGE_OF.TARGET)
+              && spell.target === currentTurn.movingFighter));
+          }
+
+          if (!spellsToExec || !spellsToExec.length) {
+            return this.store.dispatch(executeHit());
+          }
+
+          console.log('spellsToExec', spellsToExec);
+          return this.store.dispatch(applySpellToCharacter({ fighterId: spellsToExec[0].target, spell: spellsToExec[0] }));
+        }),
         takeUntil(this.destroy$),
       )
       .subscribe();

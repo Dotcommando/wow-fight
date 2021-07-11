@@ -21,3 +21,7 @@ export const removeSpell = createAction(
 export const executeSpells = createAction(
   `[ SPELLS ] Execute Spells`,
 );
+
+export const executeHit = createAction(
+  `[ SPELLS ] Execute Hit`,
+);

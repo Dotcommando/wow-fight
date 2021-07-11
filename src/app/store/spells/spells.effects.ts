@@ -6,6 +6,7 @@ import { Store } from '@ngrx/store';
 import { tap, withLatestFrom } from 'rxjs/operators';
 
 import { BattleService } from '../../services/battle.service';
+import { selectAttack } from '../attacks/attacks.selectors';
 import { selectCharacters, selectParties } from '../fighters/fighters.selectors';
 import { selectTurn } from '../turn/turn.selectors';
 import { executeSpells } from './spells.actions';
@@ -29,9 +30,10 @@ export class SpellsEffects {
         this.store.select(selectParties),
         this.store.select(selectSpells),
         this.store.select(selectTurn),
+        this.store.select(selectAttack),
       ),
-      tap(([ action, characters, parties, spells, currentTurn ]) => this.battleService
-        .pushSpellsLoop({ characters, parties, spells, currentTurn })),
+      tap(([ action, characters, parties, spells, currentTurn, attack ]) => this.battleService
+        .pushSpellsLoop({ characters, parties, spells, currentTurn, attack })),
     ), { dispatch: false });
   }
 }

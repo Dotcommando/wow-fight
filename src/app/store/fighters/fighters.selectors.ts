@@ -6,13 +6,13 @@ import { IKeyAndValueOfCharacters } from '../../models/key-and-value-of-characte
 import { fightersFeatureKey, IFightersState, selectAllCharacters } from './fighters.reducer';
 
 
-export const selectedFighters = createFeatureSelector<IFightersState>(fightersFeatureKey);
+export const selectFighters = createFeatureSelector<IFightersState>(fightersFeatureKey);
 
 /**
  * @description - Returns all Characters and Beasts.
  */
 export const selectCharacters = createSelector(
-  selectedFighters,
+  selectFighters,
   selectAllCharacters,
 );
 
@@ -29,26 +29,26 @@ export const selectCharacterByProp = (state: IFightersState, { prop, value }: IK
   selectAllCharacters(state).find(character => character[prop] === value) ?? null;
 
 export const selectPlayerCharacter = createSelector(
-  selectedFighters,
+  selectFighters,
   (state: IFightersState): InstanceOf<IMainCharacter | IBeastCharacter> | null => selectCharacterByProp(state, { prop: 'status', value: STATUSES.PLAYER }),
 );
 
 export const selectCPUCharacter = createSelector(
-  selectedFighters,
+  selectFighters,
   (state: IFightersState): InstanceOf<IMainCharacter | IBeastCharacter> | null => selectCharacterByProp(state, { prop: 'status', value: STATUSES.CPU }),
 );
 
 export const selectPlayerBeasts = createSelector(
-  selectedFighters,
+  selectFighters,
   (state: IFightersState) => selectCharactersByProp(state, { prop: 'status', value: STATUSES.PLAYERS_BEAST }),
 );
 
 export const selectCPUBeasts = createSelector(
-  selectedFighters,
+  selectFighters,
   (state: IFightersState) => selectCharactersByProp(state, { prop: 'status', value: STATUSES.CPUS_BEAST }),
 );
 
 export const selectParties = createSelector(
-  selectedFighters,
+  selectFighters,
   (state: IFightersState) => ({ playerPartyId: state.playerPartyId, cpuPartyId: state.cpuPartyId }),
 );

@@ -24,11 +24,6 @@ export const phaseAfterMove = createAction(
   `[ TURN ] After Move`,
 );
 
-export const turnActiveFighterChanging = createAction(
-  `[ TURN ] Change active fighter`,
-  props<{ activeFighterId: string; activePartyId: string }>(),
-);
-
 export const nextTurn = createAction(
   `[ TURN ] Next turn`,
 );

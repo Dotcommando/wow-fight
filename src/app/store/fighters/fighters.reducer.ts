@@ -9,7 +9,7 @@ import { STATUSES } from '../../constants/statuses.enum';
 import { createCharacter } from '../../helpers/create-character.helper';
 import { IBeastCharacter, IMainCharacter, InstanceOf } from '../../models/character.type';
 import {
-  addCharacter,
+  addCharacter, applySpellToCharacter,
   nextFighter,
   removeCharacter,
   toggleCharacters,
@@ -152,6 +152,17 @@ const partiesReducerFn = createReducer(
           changes: { move: MOVE_STATUSES.MOVING },
         },
       ], state),
+  ),
+  on(applySpellToCharacter,
+    (state, { fighterId, spell }) => {
+      const fighter = state.entities[fighterId];
+
+      if (!fighter) { throw new Error(`Cannot find fighter with id ${fighterId} in state, action 'applySpellToCharacter'.`); }
+
+      // LOGIC GOING HERE
+
+      return adapter.upsertOne(fighter, state);
+    },
   ),
 );
 
