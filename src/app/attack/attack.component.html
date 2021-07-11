@@ -35,7 +35,7 @@
             <ng-container *ngIf="attackVectors.skip">
                 <mat-radio-button
                         (change)="changeAttack($event)"
-                        [value]="{ skip: true }"
+                        [value]="{ target: null, skip: true }"
                 >
                     <div class="wrap-mat-radio-label">
                         Skip the move

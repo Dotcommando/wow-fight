@@ -2,10 +2,10 @@ import { PHASE } from '../constants/phase.constant';
 import { ICastedSpell } from './casted-spell.interface';
 import { IBeastCharacter, IMainCharacter, InstanceOf } from './character.type';
 import { IPartiesIds } from './parties-ids.interface';
-import { ITurn } from './turn.interface';
+import { ITurnState } from './turn.interface';
 
 export interface IMainLoopData {
-  turn: ITurn;
+  turn: ITurnState;
   phase: PHASE;
   spells: ICastedSpell;
   assaulterId: string;

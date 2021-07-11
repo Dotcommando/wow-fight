@@ -2,7 +2,6 @@ import { MOVE_STATUSES } from '../constants/move-statuses.enum';
 import { NAMES } from '../constants/name.enum';
 import { SPELLS } from '../constants/spells.enum';
 import { STATUSES } from '../constants/statuses.enum';
-import { ICastedSpell } from './casted-spell.interface';
 
 export interface IMainCharacter {
   name: NAMES;
@@ -42,7 +41,5 @@ export type InstanceOf<T> = T & {
   dps: number;
   hp: number;
   crit: number;
-  spellsCasted: ICastedSpell[];
-  spellBound: ICastedSpell[];
   move: MOVE_STATUSES | null;
 }

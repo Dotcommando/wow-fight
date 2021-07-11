@@ -1,39 +1,17 @@
 import { createFeatureSelector, createSelector } from '@ngrx/store';
 
-import { ITurnState, selectAllTurns, turnFeatureKey } from './turn.reducer';
+import { PHASE } from '../../constants/phase.constant';
+import { ITurnState } from '../../models/turn.interface';
+import { turnFeatureKey } from './turn.reducer';
 
-export const selectedTurns = createFeatureSelector<ITurnState>(turnFeatureKey);
+export const selectTurn = createFeatureSelector<ITurnState>(turnFeatureKey);
 
-export const selectTurns = createSelector(
-  selectedTurns,
-  selectAllTurns,
+export const selectCurrentPhase = createSelector(
+  selectTurn,
+  (state: ITurnState): PHASE | null => state.phase,
 );
 
-export const selectCurrentTurn = createSelector(
-  selectedTurns,
-  (state: ITurnState) => {
-    const maxRoundTurn = state.entities[1];
-
-    if (state.ids.length === 1) {
-      return maxRoundTurn;
-    } else {
-      const turns = state.entities;
-
-      return state.ids
-        // @ts-ignore
-        .reduce((maxIndex: number, index: number) => {
-          // @ts-ignore
-          if (!turns[index] || typeof turns[index].roundNumber !== 'number') {
-            return turns[maxIndex];
-          }
-
-          // @ts-ignore
-          return turns[maxIndex].roundNumber > turns[index].roundNumber
-            ? turns[maxIndex]
-            : turns[index];
-        },
-        maxRoundTurn,
-        );
-    }
-  },
+export const selectRoundNumber = createSelector(
+  selectTurn,
+  (state: ITurnState): number => state.roundNumber,
 );

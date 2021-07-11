@@ -1,10 +1,11 @@
 import { createAction, props } from '@ngrx/store';
 
+import { IAttackState } from '../../models/attack-vectors.interface';
 import { ICastedSpell } from '../../models/casted-spell.interface';
 
 export const addSpell = createAction(
   `[ SPELLS ] Add Spell`,
-  props< { spell: ICastedSpell }>(),
+  props< { attack: Partial<IAttackState> }>(),
 );
 
 export const updateSpell = createAction(
@@ -15,4 +16,8 @@ export const updateSpell = createAction(
 export const removeSpell = createAction(
   `[ SPELLS ] Remove Spell`,
   props< { id: string }>(),
+);
+
+export const executeSpells = createAction(
+  `[ SPELLS ] Execute Spells`,
 );

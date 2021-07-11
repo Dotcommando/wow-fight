@@ -32,12 +32,12 @@ export const toggleCharacters = createAction(
   `[ FIGHTERS ] Toggle Characters`,
 );
 
-export const moveStarted = createAction(
-  `[ MOVE ] Move Started`,
+export const fighterHasStartedMove = createAction(
+  `[ FIGHTERS ] Move Started`,
   // props<{ turn: ITurn }>(),
 );
 
-export const moveCompleted = createAction(
-  `[ MOVE ] Move Completed`,
+export const fighterHasCompletedMove = createAction(
+  `[ FIGHTERS ] Move Completed`,
   props<{ attack: IAttack; assaulter: InstanceOf<IMainCharacter> }>(),
 );

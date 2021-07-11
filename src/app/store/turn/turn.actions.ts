@@ -1,7 +1,6 @@
 import { createAction, props } from '@ngrx/store';
 
-import { PHASE } from '../../constants/phase.constant';
-import { ITurn } from '../../models/turn.interface';
+import { ITurnState } from '../../models/turn.interface';
 
 export const gameStarted = createAction(
   `[ START ] Game Started`,
@@ -10,17 +9,24 @@ export const gameStarted = createAction(
 
 export const turnStarted = createAction(
   `[ TURN ] Started`,
-  props<{ turn: ITurn }>(),
+  props<{ turn: ITurnState }>(),
 );
 
-export const turnPhaseChanging = createAction(
-  `[ TURN ] Phase changing`,
-  props<{ phase: PHASE }>(),
+export const phaseBeforeMove = createAction(
+  `[ TURN ] Before Move`,
+);
+
+export const phaseMoving = createAction(
+  `[ TURN ] Moving`,
+);
+
+export const phaseAfterMove = createAction(
+  `[ TURN ] After Move`,
 );
 
 export const turnActiveFighterChanging = createAction(
   `[ TURN ] Change active fighter`,
-  props<{ activeFighterId: string }>(),
+  props<{ activeFighterId: string; activePartyId: string }>(),
 );
 
 export const nextTurn = createAction(
@@ -30,36 +36,6 @@ export const nextTurn = createAction(
 export const turnChangeNextFighter = createAction(
   `[ TURN ] Change active fighter`,
   props<{ nextFighter: string; nextPartyId: string }>(),
-);
-
-export const playerBeastsMoveStarted = createAction(
-  `[ PLAYER'S BEASTS ] Move Started`,
-  // props<{ turn: ITurn }>(),
-);
-
-export const playerBeastsMoveCompleted = createAction(
-  `[ PLAYER'S BEASTS ] Move Completed`,
-  // props<{ turn: ITurn }>(),
-);
-
-export const cpuMoveStarted = createAction(
-  `[ CPU ] Move Started`,
-  // props<{ turn: ITurn }>(),
-);
-
-export const cpuMoveCompleted = createAction(
-  `[ CPU ] Move Completed`,
-  // props<{ turn: ITurn }>(),
-);
-
-export const cpuBeastsMoveStarted = createAction(
-  `[ CPU'S BEASTS ] Move Started`,
-  // props<{ turn: ITurn }>(),
-);
-
-export const cpuBeastsMoveCompleted = createAction(
-  `[ CPU'S BEASTS ] Move Completed`,
-  // props<{ turn: ITurn }>(),
 );
 
 export const turnCompleted = createAction(
@@ -74,7 +50,7 @@ export const gameEnded = createAction(
 
 export const turnUpdated = createAction(
   `[ BATTLE ] Turn Updated`,
-  props<{ turn: ITurn }>(),
+  props<{ turn: ITurnState }>(),
 );
 
 export const deleteBattle = createAction(

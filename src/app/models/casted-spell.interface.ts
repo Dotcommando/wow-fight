@@ -14,10 +14,10 @@ export interface ICastedSpell {
   id: string;  // ID заклинания.
   spellName: SPELLS;   // Spell name.
   expiredIn: number;   // Через сколько ходов прекратит действовать.
-  target: string;      // ID цели.
+  target: string | null; // ID цели.
   assaulter: string;   // ID атакующего.
   calledBeastId?: string; // ID призванного существа.
   fireOnStage: STAGE; // Заклинание выполнять до или после хода
   stageOf: STAGE_OF;  // атакующего или жертвы.
-  firedInTHisTurn: boolean; // Заклинание отработало в этом ходу.
+  firedInThisTurn: boolean; // Заклинание отработало в этом ходу.
 }

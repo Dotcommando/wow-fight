@@ -43,8 +43,6 @@ export function createCharacter(
     dps: calculatedParams.dps,
     hp: calculatedParams.hp,
     crit: calculatedParams.crit,
-    spellsCasted: [],
-    spellBound: [],
 
     name: characterData.name,
     inheritedStrength: characterData.strength,

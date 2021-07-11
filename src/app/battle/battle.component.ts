@@ -7,25 +7,26 @@ import { BehaviorSubject, combineLatest, NEVER, Observable, Subject } from 'rxjs
 import { distinctUntilChanged, filter, map, scan, take, takeUntil, tap } from 'rxjs/operators';
 
 import { NAMES } from '../constants/name.enum';
-import { PHASE, PHASES } from '../constants/phase.constant';
+import { PHASE } from '../constants/phase.constant';
+import { STATUSES } from '../constants/statuses.enum';
 import { compareObjects } from '../helpers/compare-arrays-of-any.helper';
-import { compareITurnArrays } from '../helpers/compare-iturn-arrays.helper';
-import { IAttack, IAttackVectors } from '../models/attack-vectors.interface';
+import { IAttack, IAttackVectors, ICharacterShort } from '../models/attack-vectors.interface';
 import { ICastedSpell } from '../models/casted-spell.interface';
 import { IBeastCharacter, IMainCharacter, InstanceOf } from '../models/character.type';
 import { IPartiesIds } from '../models/parties-ids.interface';
-import { ITurn } from '../models/turn.interface';
+import { ITurnState } from '../models/turn.interface';
 import { BattleService } from '../services/battle.service';
-import { moveCompleted } from '../store/fighters/fighters.actions';
+import { updateAttack } from '../store/attacks/attacks.actions';
 import {
   selectCharacters,
   selectCPUBeasts,
-  selectCPUCharacter, selectParties,
+  selectCPUCharacter,
+  selectParties,
   selectPlayerBeasts,
   selectPlayerCharacter,
 } from '../store/fighters/fighters.selectors';
 import { selectSpells } from '../store/spells/spells.selectors';
-import { selectCurrentTurn, selectTurns } from '../store/turn/turn.selectors';
+import { selectCurrentPhase, selectRoundNumber, selectTurn } from '../store/turn/turn.selectors';
 
 
 @Component({
@@ -57,20 +58,24 @@ export class BattleComponent implements OnInit, OnDestroy {
     select(selectCharacters),
   );
 
-  public turns$: Observable<ITurn[]> = this.store.pipe(
-    select(selectTurns),
+  public turn$: Observable<ITurnState> = this.store.pipe(
+    select(selectTurn),
   );
 
   public spells$: Observable<ICastedSpell[]> = this.store.pipe(
     select(selectSpells),
   );
 
-  public currentTurn$: Observable<ITurn> = this.store.pipe(
-    select(selectCurrentTurn),
-  );
-
   public partiesIds$: Observable<IPartiesIds> = this.store.pipe(
     select(selectParties),
+  );
+
+  public phase$: Observable<PHASE | null> = this.store.pipe(
+    select(selectCurrentPhase),
+  );
+
+  public roundNumber$: Observable<number> = this.store.pipe(
+    select(selectRoundNumber),
   );
 
   public playerCharacter!: InstanceOf<IMainCharacter>;
@@ -90,12 +95,6 @@ export class BattleComponent implements OnInit, OnDestroy {
 
   public playerAttackVectors$: Observable<IAttackVectors | null> = this.battleService.playerAttackVectors$;
 
-  private newTurnHasStartedSubject$ = new BehaviorSubject<ITurn | null>(null);
-  public newTurnHasStarted$ = this.newTurnHasStartedSubject$.asObservable();
-
-  private newPhaseHasStartedSubject$ = new BehaviorSubject<PHASE | null>(null);
-  public newPhaseHasStarted$ = this.newPhaseHasStartedSubject$.asObservable();
-
   private currentFighterIdSubject$ = new BehaviorSubject<string | null>(null);
   public currentFighterId$ = this.currentFighterIdSubject$.asObservable();
 
@@ -107,39 +106,42 @@ export class BattleComponent implements OnInit, OnDestroy {
   ) { }
 
   ngOnInit(): void {
-    this.newTurnHasStarted$
+    this.roundNumber$
       .pipe(
-        filter((turn: ITurn | null) => Boolean(turn)),
-        tap((turn: ITurn | null) => this.currentFighterIdSubject$.next(turn?.movingFighter as string)),
-        tap((newTurn: ITurn | null) => console.log('New turn:', newTurn)),
+        // tap((turn: ITurn | null) => this.currentFighterIdSubject$.next(turn?.movingFighter as string)),
+        tap((roundNumber: number) => console.log('Round number:', roundNumber)),
         takeUntil(this.destroy$),
       )
       .subscribe();
 
     combineLatest([
-      this.currentTurn$,
-      this.newPhaseHasStarted$,
+      this.turn$,
+      this.phase$,
       this.spells$,
       this.currentFighterId$,
       this.allFighters$,
       this.partiesIds$,
     ])
       .pipe(
-        filter(([ turn, phase, spells, assaulterId, fighters, partiesIds ]) => !!assaulterId && [ null, PHASE.BEFORE_MOVE, PHASE.AFTER_MOVE ].includes(phase)),
+        // filter(([ turn, phase, spells, assaulterId, fighters, partiesIds ]) => !!assaulterId && [ null, PHASE.BEFORE_MOVE, PHASE.AFTER_MOVE ].includes(phase)),
         // @ts-ignore
         distinctUntilChanged(compareObjects),
-        // map((dataArray: Iterable<{ 0: ITurn; 1: PHASE; 2: ICastedSpell[]; 3: string; 4: InstanceOf<IMainCharacter | IBeastCharacter>; 5: { cpuPartyId: string; playerPartyId: string } }>) => {
         map((dataArray) => {
-
           // @ts-ignore
           const [ turn, phase, spells, assaulterId, fighters, partiesIds ] = dataArray;
-          if (phase === PHASE.MOVING && assaulterId === partiesIds.playerPartyId) {
+          const currentFighter = fighters.find(fighter => fighter.id === assaulterId);
+          console.log(currentFighter?.status);
+          console.log(phase);
+          if (phase === PHASE.MOVING && currentFighter?.status === STATUSES.PLAYER) {
+            console.log('It\'s player move!');
             return NEVER;
+          } else if (phase === PHASE.MOVING && currentFighter?.status === STATUSES.CPU) {
+            console.log('It\'s CPU move!');
           }
 
           if (!spells.length && phase && [ PHASE.BEFORE_MOVE, PHASE.AFTER_MOVE ].includes(phase)) {
             // @ts-ignore
-            this.battleService.switchToNextStep({ turn, phase, spells, assaulterId, fighters, partiesIds });
+            // this.battleService.switchToNextStep({ turn, phase, spells, assaulterId, fighters, partiesIds });
           }
 
           return dataArray;
@@ -149,39 +151,9 @@ export class BattleComponent implements OnInit, OnDestroy {
       )
       .subscribe();
 
-    this.turns$
+    this.battleService.spellsLoop$
       .pipe(
-        tap((turns: ITurn[]) => {
-          if (this.firstTurn) {
-            this.firstTurn = false;
-            this.newTurnHasStartedSubject$.next(turns[turns.length - 1]);
-            this.newPhaseHasStartedSubject$.next(turns[turns.length - 1].phase);
-            this.currentFighterIdSubject$.next(turns[turns.length - 1].movingFighter);
-          }
-        }),
-        distinctUntilChanged(compareITurnArrays),
-        scan((prevTurns: ITurn[], currentTurns: ITurn[]) => {
-          console.log(' ');
-          console.log('====================');
-          console.log('prev', prevTurns);
-          console.log('next', currentTurns);
-
-          if (prevTurns.length < currentTurns.length) {
-            this.newTurnHasStartedSubject$.next(currentTurns[currentTurns.length - 1]);
-            this.newPhaseHasStartedSubject$.next(currentTurns[currentTurns.length - 1].phase);
-            this.currentFighterIdSubject$.next(currentTurns[currentTurns.length - 1].movingFighter);
-          }
-
-          if (prevTurns[prevTurns.length - 1].phase !== currentTurns[currentTurns.length - 1].phase) {
-            this.newPhaseHasStartedSubject$.next(currentTurns[currentTurns.length - 1].phase);
-          }
-
-          if (prevTurns[prevTurns.length - 1].movingFighter !== currentTurns[currentTurns.length - 1].movingFighter) {
-            this.currentFighterIdSubject$.next(currentTurns[currentTurns.length - 1].movingFighter);
-          }
-
-          return currentTurns;
-        }),
+        tap((data) => console.log('spellsLoopData', data)),
         takeUntil(this.destroy$),
       )
       .subscribe();
@@ -226,9 +198,14 @@ export class BattleComponent implements OnInit, OnDestroy {
   public turnRound(): void {
     if (this.playerAttack) {
       this.store.dispatch(
-        moveCompleted({
-          attack: this.playerAttack,
-          assaulter: this.playerCharacter,
+        updateAttack({
+          attack: {
+            ...this.playerAttack,
+            assaulter: {
+              id: this.playerCharacter.id,
+              name: this.playerCharacter.name,
+            } as ICharacterShort,
+          },
         }),
       );
     }

@@ -3,7 +3,7 @@ import { Injectable } from '@angular/core';
 import { select, Store } from '@ngrx/store';
 
 import { BehaviorSubject, combineLatest, Subject } from 'rxjs';
-import { map, switchMap, tap } from 'rxjs/operators';
+import { map, tap } from 'rxjs/operators';
 
 import { MOVE_STATUSES } from '../constants/move-statuses.enum';
 import { PHASE } from '../constants/phase.constant';
@@ -12,15 +12,17 @@ import { ALL_SPELLS } from '../constants/spells.constant';
 import { SPELL_TARGET, SPELLS } from '../constants/spells.enum';
 import { STATUSES } from '../constants/statuses.enum';
 import { IAttackVectorProcessing } from '../models/attack-vector-processing.interface';
-import { Attack, AttackVector, IAttackVectors, IHitAttack } from '../models/attack-vectors.interface';
+import { AttackVector, IAttack, IAttackVectors, IHitAttack } from '../models/attack-vectors.interface';
 import { ICastedSpell } from '../models/casted-spell.interface';
 import { IBeastCharacter, IMainCharacter, InstanceOf } from '../models/character.type';
 import { CombinedFightersParties } from '../models/combined-fighter-parties.type';
 import { IMainLoopData } from '../models/main-loop-data.interface';
 import { IAssaulterEnemies } from '../models/player-enemies.interface';
+import { ITurnState } from '../models/turn.interface';
 import { updateCharacter } from '../store/fighters/fighters.actions';
 import { selectCharacters, selectParties } from '../store/fighters/fighters.selectors';
-import { gameEnded, turnChangeNextFighter, turnCompleted, turnPhaseChanging } from '../store/turn/turn.actions';
+import { selectSpells } from '../store/spells/spells.selectors';
+import { gameEnded, phaseAfterMove, phaseMoving } from '../store/turn/turn.actions';
 
 @Injectable({
   providedIn: 'root',
@@ -51,22 +53,34 @@ export class BattleService {
   private currentRoundSubject$ = new BehaviorSubject<number>(1);
   public currentRound$ = this.currentRoundSubject$.asObservable();
 
+  private spellsLoopSubject$ = new Subject<{
+    characters: InstanceOf<IMainCharacter | IBeastCharacter>[];
+    parties: { playerPartyId: string; cpuPartyId: string };
+    spells: ICastedSpell[];
+    currentTurn: ITurnState;
+  }>();
+  public spellsLoop$ = this.spellsLoopSubject$.asObservable();
+
   private fighters$ = this.store.pipe(
     select(selectCharacters),
   );
 
   private parties$ = this.store.pipe(
     select(selectParties),
-  )
+  );
 
-  private filterAssaulterEnemies = (status: STATUSES, [ fighters, parties ]: CombinedFightersParties): IAssaulterEnemies => {
+  private spells$ = this.store.pipe(
+    select(selectSpells),
+  );
+
+  private filterAssaulterEnemies = (status: STATUSES, [ fighters, parties, spells ]: CombinedFightersParties): IAssaulterEnemies => {
     const assaulter = fighters.find(fighter => fighter.status === status) as InstanceOf<IMainCharacter>;
     const enemyPartyId = assaulter.partyId === parties.cpuPartyId
       ? parties.playerPartyId
       : parties.cpuPartyId;
     const enemies = fighters.filter(fighter => fighter.partyId === enemyPartyId && fighter.isAlive);
 
-    return { assaulter, enemies };
+    return { assaulter, enemies, spells };
   };
 
   private filterPlayerAndCpuEnemies = (fightersParties: CombinedFightersParties): IAssaulterEnemies =>
@@ -100,7 +114,7 @@ export class BattleService {
   }
 
   private calculateSpellCasting = (attackVector: IAttackVectorProcessing): IAttackVectorProcessing => {
-    const { assaulter, enemies } = attackVector.assaulterEnemies;
+    const { assaulter, enemies, spells } = attackVector.assaulterEnemies;
 
     if (attackVector.attackVector.skip || assaulter.canNotCast) {
       return attackVector;
@@ -114,7 +128,7 @@ export class BattleService {
       return attackVector;
     }
 
-    const spellsCasted: ICastedSpell[] = assaulter.spellsCasted;
+    const spellsCasted: ICastedSpell[] = spells.filter(spell => spell.assaulter === assaulter.id);
 
     for (const spell of availableAssaulterSpells) {
       if (spellsCasted?.some(spellCasted => spellCasted.spellName === spell)) {
@@ -165,14 +179,14 @@ export class BattleService {
   public calculateAttackVectors$ = combineLatest([
     this.fighters$,
     this.parties$,
+    this.spells$,
   ])
     .pipe(
       map(this.filterPlayerAndCpuEnemies),
       map(this.calculateSkip),
       map(this.calculateHit),
       map(this.calculateSpellCasting),
-      tap(({ attackVector }) => console.log(attackVector)),
-      // tap(({ attackVector }) => this.playerAttackVectors = attackVector),
+      tap(({ attackVector }) => this.playerAttackVectors = attackVector),
       tap(({ attackVector }) => this.playerAttackVectorsSubject$.next(attackVector)),
     );
 
@@ -180,9 +194,9 @@ export class BattleService {
     this.playerMoveCompletedSubject$.next();
   }
 
-  applyHit = (attack: Attack, assaulter: InstanceOf<IMainCharacter>) => ([ fighters, parties ] : CombinedFightersParties) => {
+  applyHit = (attack: IAttack, assaulter: InstanceOf<IMainCharacter>, spells: ICastedSpell[]) => ([ fighters, parties, spells ] : CombinedFightersParties): CombinedFightersParties => {
     if (!(attack as IHitAttack)?.hit) {
-      return [ fighters, parties ];
+      return [ fighters, parties, spells ];
     }
 
     const damage = Math.random() > assaulter.crit
@@ -201,21 +215,8 @@ export class BattleService {
     }
 
     console.log(assaulter);
-    return [ fighters, parties ];
+    return [ fighters, parties, spells ];
   }
-
-  public applyPlayerAttack = (playerAttack: Attack, assaulter: InstanceOf<IMainCharacter>) => this.playerAttack$
-    .pipe(
-      switchMap(() => combineLatest([
-        this.fighters$,
-        this.parties$,
-      ])
-        .pipe(
-          tap(_ => console.log('playerAttack', playerAttack)),
-          map((this.applyHit(playerAttack, assaulter))),
-          map(() => console.log(playerAttack)),
-        )),
-    );
 
   public incrementRound(): number {
     const nextRound = this.currentRoundSubject$.value + 1;
@@ -239,41 +240,6 @@ export class BattleService {
     console.log('Player Move Started');
   }
 
-  public onPlayerMoveCompleted(): void {
-    console.log('Player Move Completed');
-    this.randomGameEnd();
-  }
-
-  public onPlayerBeastsMoveStarted(): void {
-    console.log('Player Beasts Move Started');
-    this.randomGameEnd();
-  }
-
-  public onPlayerBeastsMoveCompleted(): void {
-    console.log('Player Beasts Move Completed');
-    this.randomGameEnd();
-  }
-
-  public onCpuMoveStarted(): void {
-    console.log('CPU Move Started');
-    this.randomGameEnd();
-  }
-
-  public onCpuMoveCompleted(): void {
-    console.log('CPU Move Completed');
-    this.randomGameEnd();
-  }
-
-  public onCpuBeastsMoveStarted(): void {
-    console.log('CPU Beasts Move Started');
-    this.randomGameEnd();
-  }
-
-  public onCpuBeastsMoveCompleted(): void {
-    console.log('CPU Beasts Move Completed');
-    this.randomGameEnd();
-  }
-
   public onTurnCompleted(): void {
     console.log('Turn Completed');
     this.incrementRound();
@@ -281,6 +247,10 @@ export class BattleService {
 
   public onGameEnded(): void {
     console.log('Game Ended');
+  }
+
+  public onExecuteSpells(): void {
+
   }
 
   public randomGameEnd(): boolean {
@@ -327,7 +297,7 @@ export class BattleService {
 
     const nextFromAnotherParty = fighters.filter(fighter => fighter.partyId !== currentParty && fighter.move === MOVE_STATUSES.NOT_MOVED);
 
-    return nextFromAnotherParty.reduce(this.findOneFittedFighter);
+    return nextFromAnotherParty.reduce(this.findOneFittedFighter, fighters[0]);
   }
 
   public switchToNextStep(stepData: IMainLoopData): void {
@@ -340,17 +310,26 @@ export class BattleService {
     // Смена хода происходит внутри хода одного бойца.
     if ([ PHASE.BEFORE_MOVE, PHASE.MOVING ].includes(phase)) {
       return phase === PHASE.BEFORE_MOVE
-        ? this.store.dispatch(turnPhaseChanging({ phase: PHASE.MOVING }))
-        : this.store.dispatch(turnPhaseChanging({ phase: PHASE.AFTER_MOVE }));
+        ? this.store.dispatch(phaseMoving())
+        : this.store.dispatch(phaseAfterMove());
     }
 
     // Все бойцы сходили, смена хода.
-    if (fighters.every(fighter => fighter.move === MOVE_STATUSES.MOVED)) {
-      this.store.dispatch(turnCompleted()); // ====> effect turnCompleted ===> effect turnChangeNextFighter ===> effect nextFighter
-    }
+    // if (fighters.every(fighter => fighter.move === MOVE_STATUSES.MOVED)) {
+    //   this.store.dispatch(turnCompleted()); // ====> effect turnCompleted ===> effect turnChangeNextFighter ===> effect nextFighter
+    // }
 
     // Смена бойца, то есть смена фазы PHASE.AFTER_MOVE одного бойца на PHASE.BEFORE_MOVE другого бойца внутри хода
-    const nextFighterInstance = this.calculateNextFighter(assaulterId, fighters);
-    this.store.dispatch(turnChangeNextFighter({ nextFighter: nextFighterInstance.id, nextPartyId: nextFighterInstance.partyId }));
+    // const nextFighterInstance = this.calculateNextFighter(assaulterId, fighters);
+    // this.store.dispatch(turnChangeNextFighter({ nextFighter: nextFighterInstance.id, nextPartyId: nextFighterInstance.partyId }));
+  }
+
+  public pushSpellsLoop(spellsLoopData: {
+    characters: InstanceOf<IMainCharacter | IBeastCharacter>[];
+    parties: { playerPartyId: string; cpuPartyId: string };
+    spells: ICastedSpell[];
+    currentTurn: ITurnState;
+  }): void {
+    this.spellsLoopSubject$.next(spellsLoopData);
   }
 }

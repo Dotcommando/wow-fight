@@ -7,16 +7,10 @@ import { map, switchMap, takeUntil, tap } from 'rxjs/operators';
 import { DEFAULT_TURN } from '../../constants/default-turn.constant';
 import { PHASE } from '../../constants/phase.constant';
 import { BattleService } from '../../services/battle.service';
-import { moveStarted } from '../fighters/fighters.actions';
+import { fighterHasStartedMove } from '../fighters/fighters.actions';
 import {
-  cpuBeastsMoveCompleted,
-  cpuBeastsMoveStarted,
-  cpuMoveCompleted,
-  cpuMoveStarted,
   gameEnded,
   gameStarted,
-  playerBeastsMoveCompleted,
-  playerBeastsMoveStarted,
   turnCompleted,
   turnStarted,
 } from './turn.actions';
@@ -26,14 +20,8 @@ import {
 export class TurnEffects {
   public gameStarted$ = this.gameStartedFn$();
   public turnStarted$ = this.turnStartedFn$();
-  public playerMoveStarted$ = this.playerMoveStartedFn$();
-  // public playerMoveCompleted$ = this.playerMoveCompletedFn$();
-  public playerBeastsMoveStarted$ = this.playerBeastsMoveStartedFn$();
-  public playerBeastsMoveCompleted$ = this.playerBeastsMoveCompletedFn$();
-  public cpuMoveStarted$ = this.cpuMoveStartedFn$();
-  public cpuMoveCompleted$ = this.cpuMoveCompletedFn$();
-  public cpuBeastsMoveStarted$ = this.cpuBeastsMoveStartedFn$();
-  public cpuBeastsMoveCompleted$ = this.cpuBeastsMoveCompletedFn$();
+  public moveStarted$ = this.moveStartedFn$();
+  // public moveCompleted$ = this.moveCompletedFn$();
   public turnCompleted$ = this.turnCompletedFn$();
   public gameEnded$ = this.gameEndedFn$();
 
@@ -58,17 +46,17 @@ export class TurnEffects {
     ));
   }
 
-  private playerMoveStartedFn$(): CreateEffectMetadata {
+  private moveStartedFn$(): CreateEffectMetadata {
     return createEffect(() => this.actions$.pipe(
-      ofType(moveStarted),
+      ofType(fighterHasStartedMove),
       tap(() => this.battleService.onPlayerMoveStarted()),
       switchMap(() => this.battleService.calculateAttackVectors$),
     ), { dispatch: false });
   }
 
-  // private playerMoveCompletedFn$(): CreateEffectMetadata {
+  // private moveCompletedFn$(): CreateEffectMetadata {
   //   return createEffect(() => this.actions$.pipe(
-  //     ofType(playerMoveCompleted),
+  //     ofType(moveCompleted),
   //     tap(() => this.battleService.onPlayerMoveCompleted()),
   //     switchMap(({ playerAttack, assaulter }: PlayerMoveCompletedActionType) => this.battleService.applyPlayerAttack(playerAttack, assaulter)),
   //     map(() => playerBeastsMoveStarted()),
@@ -76,59 +64,23 @@ export class TurnEffects {
   //   ));
   // }
 
-  private playerBeastsMoveStartedFn$(): CreateEffectMetadata {
-    return createEffect(() => this.actions$.pipe(
-      ofType(playerBeastsMoveStarted),
-      tap(() => this.battleService.onPlayerBeastsMoveStarted()),
-      map(() => playerBeastsMoveCompleted()),
-      takeUntil(this.battleService.gameEnded$),
-    ));
-  }
+  // private cpuMoveStartedFn$(): CreateEffectMetadata {
+  //   return createEffect(() => this.actions$.pipe(
+  //     ofType(cpuMoveStarted),
+  //     tap(() => this.battleService.onCpuMoveStarted()),
+  //     map(() => cpuMoveCompleted()),
+  //     takeUntil(this.battleService.gameEnded$),
+  //   ));
+  // }
 
-  private playerBeastsMoveCompletedFn$(): CreateEffectMetadata {
-    return createEffect(() => this.actions$.pipe(
-      ofType(playerBeastsMoveCompleted),
-      tap(() => this.battleService.onPlayerBeastsMoveCompleted()),
-      map(() => cpuMoveStarted()),
-      takeUntil(this.battleService.gameEnded$),
-    ));
-  }
-
-  private cpuMoveStartedFn$(): CreateEffectMetadata {
-    return createEffect(() => this.actions$.pipe(
-      ofType(cpuMoveStarted),
-      tap(() => this.battleService.onCpuMoveStarted()),
-      map(() => cpuMoveCompleted()),
-      takeUntil(this.battleService.gameEnded$),
-    ));
-  }
-
-  private cpuMoveCompletedFn$(): CreateEffectMetadata {
-    return createEffect(() => this.actions$.pipe(
-      ofType(cpuMoveCompleted),
-      tap(() => this.battleService.onCpuMoveCompleted()),
-      map(() => cpuBeastsMoveStarted()),
-      takeUntil(this.battleService.gameEnded$),
-    ));
-  }
-
-  private cpuBeastsMoveStartedFn$(): CreateEffectMetadata {
-    return createEffect(() => this.actions$.pipe(
-      ofType(cpuBeastsMoveStarted),
-      tap(() => this.battleService.onCpuBeastsMoveStarted()),
-      map(() => cpuBeastsMoveCompleted()),
-      takeUntil(this.battleService.gameEnded$),
-    ));
-  }
-
-  private cpuBeastsMoveCompletedFn$(): CreateEffectMetadata {
-    return createEffect(() => this.actions$.pipe(
-      ofType(cpuBeastsMoveCompleted),
-      tap(() => this.battleService.onCpuBeastsMoveCompleted()),
-      map(() => turnCompleted()),
-      takeUntil(this.battleService.gameEnded$),
-    ));
-  }
+  // private cpuMoveCompletedFn$(): CreateEffectMetadata {
+  //   return createEffect(() => this.actions$.pipe(
+  //     ofType(cpuMoveCompleted),
+  //     tap(() => this.battleService.onCpuMoveCompleted()),
+  //     map(() => cpuBeastsMoveStarted()),
+  //     takeUntil(this.battleService.gameEnded$),
+  //   ));
+  // }
 
   private turnCompletedFn$(): CreateEffectMetadata {
     return createEffect(() => this.actions$.pipe(
@@ -147,7 +99,7 @@ export class TurnEffects {
     return createEffect(() => this.actions$.pipe(
       ofType(turnStarted),
       tap(() => this.battleService.onTurnStarted()),
-      map(() => moveStarted()),
+      map(() => fighterHasStartedMove()),
     ));
   }
 

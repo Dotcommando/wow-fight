@@ -1,3 +1,4 @@
+import { STAGE, STAGE_OF } from '../models/casted-spell.interface';
 import { ISpell } from '../models/spell-attributes.interface';
 import { NAMES } from './name.enum';
 import { MASSIVENESS, SPELL_TARGET, SPELLS } from './spells.enum';
@@ -13,6 +14,8 @@ export const SPELL_FEAR: ISpell = {
   reduceHP: false,
   callBeast: false,
   coolDown: 60,
+  fireOnStage: STAGE.BEFORE_MOVE,
+  stageOf: STAGE_OF.TARGET,
 };
 
 export const SPELL_FILTH: ISpell = {
@@ -27,6 +30,8 @@ export const SPELL_FILTH: ISpell = {
   HPDelta: 20,
   callBeast: false,
   coolDown: 10,
+  fireOnStage: STAGE.AFTER_MOVE,
+  stageOf: STAGE_OF.ASSAULTER,
 };
 
 export const SPELL_ANCESTRAL_SPIRIT: ISpell = {
@@ -41,6 +46,8 @@ export const SPELL_ANCESTRAL_SPIRIT: ISpell = {
   HPDelta: 50,
   callBeast: false,
   coolDown: 10,
+  fireOnStage: STAGE.AFTER_MOVE,
+  stageOf: STAGE_OF.ASSAULTER,
 };
 
 export const SPELL_REBIRTH: ISpell = {
@@ -55,6 +62,8 @@ export const SPELL_REBIRTH: ISpell = {
   callBeast: true,
   coolDown: 10,
   calledBeast: NAMES.SKELETON,
+  fireOnStage: STAGE.AFTER_MOVE,
+  stageOf: STAGE_OF.ASSAULTER,
 };
 
 export const ALL_SPELLS: ISpell[] = [
