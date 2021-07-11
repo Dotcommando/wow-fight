@@ -15,7 +15,7 @@ export const updateCharacter = createAction(
 
 export const updateCharacters = createAction(
   `[ FIGHTERS ] Update Many`,
-  props< { characters: InstanceOf<IMainCharacter | IBeastCharacter>[] }>(),
+  props< { changes: { id: string; changes: Partial<InstanceOf<IMainCharacter | IBeastCharacter>> }[]}>(),
 );
 
 export const nextFighter = createAction(
@@ -34,6 +34,10 @@ export const toggleCharacters = createAction(
 
 export const moveStarted = createAction(
   `[ FIGHTERS ] Move Started`,
+);
+
+export const playerMoveStarted = createAction(
+  `[ FIGHTERS ] Player's Move Started`,
 );
 
 export const moveCompleted = createAction(

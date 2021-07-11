@@ -15,3 +15,8 @@ export const selectRoundNumber = createSelector(
   selectTurn,
   (state: ITurnState): number => state.roundNumber,
 );
+
+export const selectCurrentFighterId = createSelector(
+  selectTurn,
+  (state: ITurnState): string => state.movingFighter,
+);

@@ -6,7 +6,6 @@ import { BehaviorSubject, combineLatest, Subject } from 'rxjs';
 import { map, tap } from 'rxjs/operators';
 
 import { MOVE_STATUSES } from '../constants/move-statuses.enum';
-import { PHASE } from '../constants/phase.constant';
 import { GAME_SETTINGS, PRIORITY_QUERY } from '../constants/settings.constant';
 import { ALL_SPELLS } from '../constants/spells.constant';
 import { SPELL_TARGET, SPELLS } from '../constants/spells.enum';
@@ -16,12 +15,12 @@ import { AttackVector, IAttackVectors } from '../models/attack-vectors.interface
 import { ICastedSpell } from '../models/casted-spell.interface';
 import { IBeastCharacter, IMainCharacter, InstanceOf } from '../models/character.type';
 import { CombinedFightersParties } from '../models/combined-fighter-parties.type';
-import { IMainLoopData } from '../models/main-loop-data.interface';
 import { IAssaulterEnemies } from '../models/player-enemies.interface';
 import { ISpellsLoopData } from '../models/spells-loop-data.interface';
 import { selectCharacters, selectParties } from '../store/fighters/fighters.selectors';
 import { selectSpells } from '../store/spells/spells.selectors';
-import { gameEnded, phaseAfterMove, phaseMoving } from '../store/turn/turn.actions';
+import { gameEnded } from '../store/turn/turn.actions';
+import { selectCurrentFighterId } from '../store/turn/turn.selectors';
 
 @Injectable({
   providedIn: 'root',
@@ -55,6 +54,10 @@ export class BattleService {
   private spellsLoopSubject$ = new Subject<ISpellsLoopData>();
   public spellsLoop$ = this.spellsLoopSubject$.asObservable();
 
+  private assaulterId$ = this.store.pipe(
+    select(selectCurrentFighterId),
+  );
+
   private fighters$ = this.store.pipe(
     select(selectCharacters),
   );
@@ -67,8 +70,8 @@ export class BattleService {
     select(selectSpells),
   );
 
-  private filterAssaulterEnemies = (status: STATUSES, [ fighters, parties, spells ]: CombinedFightersParties): IAssaulterEnemies => {
-    const assaulter = fighters.find(fighter => fighter.status === status) as InstanceOf<IMainCharacter>;
+  private filterAssaulterEnemies = ([ assaulterId, fighters, parties, spells ]: CombinedFightersParties): IAssaulterEnemies => {
+    const assaulter = fighters.find(fighter => fighter.id === assaulterId) as InstanceOf<IMainCharacter>;
     const enemyPartyId = assaulter.partyId === parties.cpuPartyId
       ? parties.playerPartyId
       : parties.cpuPartyId;
@@ -78,7 +81,7 @@ export class BattleService {
   };
 
   private filterPlayerAndCpuEnemies = (fightersParties: CombinedFightersParties): IAssaulterEnemies =>
-    this.filterAssaulterEnemies(STATUSES.PLAYER, fightersParties);
+    this.filterAssaulterEnemies(fightersParties);
 
   private calculateSkip = (assaulterEnemies: IAssaulterEnemies): IAttackVectorProcessing => ({
     assaulterEnemies,
@@ -171,6 +174,7 @@ export class BattleService {
   }
 
   public calculateAttackVectors$ = combineLatest([
+    this.assaulterId$,
     this.fighters$,
     this.parties$,
     this.spells$,
@@ -183,10 +187,6 @@ export class BattleService {
       tap(({ attackVector }) => this.playerAttackVectors = attackVector),
       tap(({ attackVector }) => this.playerAttackVectorsSubject$.next(attackVector)),
     );
-
-  public emitPlayerMoveCompleted(): void {
-    this.playerMoveCompletedSubject$.next();
-  }
 
   public incrementRound(): number {
     const nextRound = this.currentRoundSubject$.value + 1;
@@ -219,10 +219,6 @@ export class BattleService {
     console.log('Game Ended');
   }
 
-  public onExecuteSpells(): void {
-
-  }
-
   public randomGameEnd(): boolean {
     const ended = Math.random() < 0.01;
     if (ended) {
@@ -231,11 +227,6 @@ export class BattleService {
     }
 
     return ended;
-  }
-
-  public setPlayerAttack(newPlayerAttack: AttackVector): void {
-    this.playerAttack = newPlayerAttack;
-    this.playerAttackSubject$.next(newPlayerAttack);
   }
 
   private findOneFittedFighter = (fighter: InstanceOf<IMainCharacter | IBeastCharacter> | undefined, next: InstanceOf<IMainCharacter | IBeastCharacter>) => {

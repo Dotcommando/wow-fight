@@ -92,8 +92,8 @@ const partiesReducerFn = createReducer(
       .updateOne({ id, changes }, state),
   ),
   on(updateCharacters,
-    (state, { characters }) => adapter
-      .updateMany(characters.map(character => ({ id: character.id, changes: character })), state),
+    (state, { changes }) => adapter
+      .updateMany(changes, state),
   ),
   on(removeCharacter,
     (state, { characterId }) => adapter

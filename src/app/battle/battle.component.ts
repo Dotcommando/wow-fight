@@ -3,7 +3,7 @@ import { FormControl, FormGroup } from '@angular/forms';
 
 import { select, Store } from '@ngrx/store';
 
-import { BehaviorSubject, combineLatest, NEVER, Observable, Subject } from 'rxjs';
+import { combineLatest, NEVER, Observable, Subject } from 'rxjs';
 import { distinctUntilChanged, map, takeUntil, tap } from 'rxjs/operators';
 
 import { NAMES } from '../constants/name.enum';
@@ -28,7 +28,7 @@ import {
 } from '../store/fighters/fighters.selectors';
 import { addSpell, executeHit } from '../store/spells/spells.actions';
 import { selectSpells } from '../store/spells/spells.selectors';
-import { selectCurrentPhase, selectRoundNumber, selectTurn } from '../store/turn/turn.selectors';
+import { selectCurrentFighterId, selectCurrentPhase, selectRoundNumber, selectTurn } from '../store/turn/turn.selectors';
 
 
 @Component({
@@ -80,6 +80,10 @@ export class BattleComponent implements OnInit, OnDestroy {
     select(selectRoundNumber),
   );
 
+  public currentFighterId$: Observable<string> = this.store.pipe(
+    select(selectCurrentFighterId),
+  );
+
   public playerCharacter!: InstanceOf<IMainCharacter>;
   public cpuCharacter!: InstanceOf<IMainCharacter>;
   public playerBeasts: InstanceOf<IBeastCharacter>[] = [];
@@ -96,9 +100,6 @@ export class BattleComponent implements OnInit, OnDestroy {
   });
 
   public playerAttackVectors$: Observable<IAttackVectors | null> = this.battleService.playerAttackVectors$;
-
-  private currentFighterIdSubject$ = new BehaviorSubject<string | null>(null);
-  public currentFighterId$ = this.currentFighterIdSubject$.asObservable();
 
   private firstTurn = true;
 
@@ -131,6 +132,7 @@ export class BattleComponent implements OnInit, OnDestroy {
         map((dataArray) => {
           // @ts-ignore
           const [ turn, phase, spells, assaulterId, fighters, partiesIds ] = dataArray;
+          console.log(assaulterId);
           const currentFighter = fighters.find(fighter => fighter.id === assaulterId);
           console.log(currentFighter?.status);
           console.log(phase);

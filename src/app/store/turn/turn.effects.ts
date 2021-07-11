@@ -9,10 +9,10 @@ import { DEFAULT_TURN } from '../../constants/default-turn.constant';
 import { findNextFighter } from '../../helpers/find-next-fighter.helper';
 import { IBeastCharacter, IMainCharacter, InstanceOf } from '../../models/character.type';
 import { BattleService } from '../../services/battle.service';
-import { moveStarted } from '../fighters/fighters.actions';
+import { moveStarted, playerMoveStarted } from '../fighters/fighters.actions';
 import { selectCharacters, selectParties } from '../fighters/fighters.selectors';
 import { executeSpells } from '../spells/spells.actions';
-import { gameEnded, gameStarted, phaseAfterMove, turnChangeNextFighter, turnCompleted, turnStarted } from './turn.actions';
+import { gameEnded, gameStarted, nextTurn, phaseAfterMove, turnChangeNextFighter, turnCompleted, turnStarted } from './turn.actions';
 
 
 @Injectable()
@@ -69,14 +69,20 @@ export class TurnEffects {
   private turnChangeNextFighterFn$(): CreateEffectMetadata {
     return createEffect(() => this.actions$.pipe(
       ofType(turnChangeNextFighter),
+      tap(action => {
+        console.log(' ');
+        console.log('!!!!!!!!!!!!!');
+        console.log(action);
+        console.log('!!!!!!!!!!!!!');
+        console.log(' ');
+      }),
       map(() => moveStarted()),
     ));
   }
 
   private moveStartedFn$(): CreateEffectMetadata {
     return createEffect(() => this.actions$.pipe(
-      ofType(moveStarted),
-      tap(() => this.battleService.onPlayerMoveStarted()),
+      ofType(moveStarted, playerMoveStarted),
       switchMap(() => this.battleService.calculateAttackVectors$),
     ), { dispatch: false });
   }
@@ -107,4 +113,18 @@ export class TurnEffects {
       map(() => executeSpells()),
     ));
   }
+
+  // private nextTurnFn$() : CreateEffectMetadata {
+  //   return createEffect(() => this.actions$.pipe(
+  //     ofType(nextTurn),
+  //     map(({ playerId, playerPartyId }) => turnStarted({
+  //       turn: {
+  //         ...DEFAULT_TURN,
+  //         roundNumber: this.battleService.getCurrentRound(),
+  //         activeParty: playerPartyId,
+  //         movingFighter: playerId,
+  //       },
+  //     })),
+  //   ));
+  // }
 }
