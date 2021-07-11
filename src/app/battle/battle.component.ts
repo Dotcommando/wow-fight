@@ -4,7 +4,7 @@ import { FormControl, FormGroup } from '@angular/forms';
 import { select, Store } from '@ngrx/store';
 
 import { BehaviorSubject, combineLatest, NEVER, Observable, Subject } from 'rxjs';
-import { distinctUntilChanged, filter, map, scan, take, takeUntil, tap } from 'rxjs/operators';
+import { distinctUntilChanged, map, takeUntil, tap } from 'rxjs/operators';
 
 import { NAMES } from '../constants/name.enum';
 import { PHASE } from '../constants/phase.constant';
@@ -17,6 +17,7 @@ import { IPartiesIds } from '../models/parties-ids.interface';
 import { ITurnState } from '../models/turn.interface';
 import { BattleService } from '../services/battle.service';
 import { updateAttack } from '../store/attacks/attacks.actions';
+import { applySpellToCharacter } from '../store/fighters/fighters.actions';
 import {
   selectCharacters,
   selectCPUBeasts,
@@ -28,7 +29,6 @@ import {
 import { addSpell, executeHit } from '../store/spells/spells.actions';
 import { selectSpells } from '../store/spells/spells.selectors';
 import { selectCurrentPhase, selectRoundNumber, selectTurn } from '../store/turn/turn.selectors';
-import { applySpellToCharacter } from '../store/fighters/fighters.actions';
 
 
 @Component({
@@ -148,7 +148,6 @@ export class BattleComponent implements OnInit, OnDestroy {
 
           return dataArray;
         }),
-        take(6),
         takeUntil(this.destroy$),
       )
       .subscribe();
@@ -191,7 +190,6 @@ export class BattleComponent implements OnInit, OnDestroy {
             return this.store.dispatch(executeHit());
           }
 
-          console.log('spellsToExec', spellsToExec);
           return this.store.dispatch(applySpellToCharacter({ fighterId: spellsToExec[0].target, spell: spellsToExec[0] }));
         }),
         takeUntil(this.destroy$),

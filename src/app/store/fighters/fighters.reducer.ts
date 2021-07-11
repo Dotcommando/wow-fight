@@ -5,11 +5,18 @@ import { UUID } from 'angular2-uuid';
 
 import { MOVE_STATUSES } from '../../constants/move-statuses.enum';
 import { NAMES } from '../../constants/name.enum';
+import { GAME_SETTINGS, PRIORITY_QUERY } from '../../constants/settings.constant';
+import { ALL_SPELLS } from '../../constants/spells.constant';
+import { SPELLS } from '../../constants/spells.enum';
 import { STATUSES } from '../../constants/statuses.enum';
-import { createCharacter } from '../../helpers/create-character.helper';
+import { createBeast, createCharacter } from '../../helpers/create-character.helper';
+import { ICastedSpell } from '../../models/casted-spell.interface';
 import { IBeastCharacter, IMainCharacter, InstanceOf } from '../../models/character.type';
 import {
-  addCharacter, applySpellToCharacter,
+  addCharacter,
+  applyHit,
+  applySpellToCharacter,
+  moveCompleted,
   nextFighter,
   removeCharacter,
   toggleCharacters,
@@ -81,8 +88,8 @@ const partiesReducerFn = createReducer(
       .upsertOne(character, state),
   ),
   on(updateCharacter,
-    (state, { character }) => adapter
-      .updateOne({ id: character.id, changes: character }, state),
+    (state, { id, changes }) => adapter
+      .updateOne({ id, changes }, state),
   ),
   on(updateCharacters,
     (state, { characters }) => adapter
@@ -154,15 +161,68 @@ const partiesReducerFn = createReducer(
       ], state),
   ),
   on(applySpellToCharacter,
-    (state, { fighterId, spell }) => {
-      const fighter = state.entities[fighterId];
+    (state: IFightersState, { fighterId, spell }: { fighterId: string; spell: ICastedSpell }) => {
+      const fighter = { ...state.entities[fighterId] };
+      const spellEntity = ALL_SPELLS.find(spellFromSpellsLIst => spellFromSpellsLIst.name === spell.spellName);
 
-      if (!fighter) { throw new Error(`Cannot find fighter with id ${fighterId} in state, action 'applySpellToCharacter'.`); }
+      if (!fighter) throw new Error(`Cannot find fighter with id ${fighterId} in state, action 'applySpellToCharacter'.`);
+      if (!spellEntity) throw new Error(`Cannot find spell ${spell.spellName} in list of spells.`);
 
-      // LOGIC GOING HERE
+      const changes: Partial<InstanceOf<IMainCharacter | IBeastCharacter>> = {};
 
-      return adapter.upsertOne(fighter, state);
+      switch (spell.spellName) {
+        case SPELLS.ANCESTRAL_SPIRIT:
+          changes.hp = fighter.hp + spellEntity.HPDelta > fighter.inheritedHp
+            ? fighter.inheritedHp
+            : fighter.hp + spellEntity.HPDelta;
+
+          break;
+
+        case SPELLS.FILTH:
+          const hpResult = fighter.hp - spellEntity.HPDelta;
+
+          changes.hp = hpResult < 0
+            ? 0
+            : hpResult;
+
+          if (hpResult < 0) {
+            changes.isAlive = false;
+          }
+
+          break;
+
+        case SPELLS.FEAR:
+          changes.canNotAttack = true;
+          changes.canNotCast = true;
+
+          break;
+
+        case SPELLS.REBIRTH:
+          const skeletonPriority = GAME_SETTINGS.priority === PRIORITY_QUERY.LOWEST_FIRST
+            ? fighter.priority - 1
+            : fighter.priority + 1;
+
+          return adapter.addOne(
+            createBeast(
+              NAMES.SKELETON,
+              fighter.partyId,
+              skeletonPriority,
+              fighter.status === STATUSES.PLAYER ? STATUSES.PLAYERS_BEAST : STATUSES.CPUS_BEAST,
+            ),
+            state);
+
+        default:
+          break;
+      }
+
+      return adapter.updateOne({ id: spell.target, changes }, state);
     },
+  ),
+  on(applyHit,
+    (state, { id, changes }) => adapter.updateOne({ id, changes }, state),
+  ),
+  on(moveCompleted,
+    (state, { id }) => adapter.updateOne({ id, changes: { move: MOVE_STATUSES.MOVED }}, state),
   ),
 );
 

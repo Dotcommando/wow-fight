@@ -12,14 +12,13 @@ import { ALL_SPELLS } from '../constants/spells.constant';
 import { SPELL_TARGET, SPELLS } from '../constants/spells.enum';
 import { STATUSES } from '../constants/statuses.enum';
 import { IAttackVectorProcessing } from '../models/attack-vector-processing.interface';
-import { AttackVector, IAttack, IAttackVectors, IHitAttack } from '../models/attack-vectors.interface';
+import { AttackVector, IAttackVectors } from '../models/attack-vectors.interface';
 import { ICastedSpell } from '../models/casted-spell.interface';
 import { IBeastCharacter, IMainCharacter, InstanceOf } from '../models/character.type';
 import { CombinedFightersParties } from '../models/combined-fighter-parties.type';
 import { IMainLoopData } from '../models/main-loop-data.interface';
 import { IAssaulterEnemies } from '../models/player-enemies.interface';
 import { ISpellsLoopData } from '../models/spells-loop-data.interface';
-import { updateCharacter } from '../store/fighters/fighters.actions';
 import { selectCharacters, selectParties } from '../store/fighters/fighters.selectors';
 import { selectSpells } from '../store/spells/spells.selectors';
 import { gameEnded, phaseAfterMove, phaseMoving } from '../store/turn/turn.actions';
@@ -189,30 +188,6 @@ export class BattleService {
     this.playerMoveCompletedSubject$.next();
   }
 
-  applyHit = (attack: IAttack, assaulter: InstanceOf<IMainCharacter>, spells: ICastedSpell[]) => ([ fighters, parties, spells ] : CombinedFightersParties): CombinedFightersParties => {
-    if (!(attack as IHitAttack)?.hit) {
-      return [ fighters, parties, spells ];
-    }
-
-    const damage = Math.random() > assaulter.crit
-      ? assaulter.dps * 1.5
-      : assaulter.dps;
-
-    const defender = fighters.find(fighter => fighter.id === attack?.target?.id);
-
-    if (defender) {
-      console.log('defender', defender);
-      this.store.dispatch(
-        updateCharacter({
-          character: { ...defender, hp: defender.hp - damage },
-        }),
-      );
-    }
-
-    console.log(assaulter);
-    return [ fighters, parties, spells ];
-  }
-
   public incrementRound(): number {
     const nextRound = this.currentRoundSubject$.value + 1;
     this.currentRoundSubject$.next(nextRound);
@@ -293,30 +268,6 @@ export class BattleService {
     const nextFromAnotherParty = fighters.filter(fighter => fighter.partyId !== currentParty && fighter.move === MOVE_STATUSES.NOT_MOVED);
 
     return nextFromAnotherParty.reduce(this.findOneFittedFighter, fighters[0]);
-  }
-
-  public switchToNextStep(stepData: IMainLoopData): void {
-    if (!stepData.phase) {
-      return;
-    }
-
-    const { turn, phase, spells, assaulterId, fighters, partiesIds  } = stepData;
-
-    // Смена хода происходит внутри хода одного бойца.
-    if ([ PHASE.BEFORE_MOVE, PHASE.MOVING ].includes(phase)) {
-      return phase === PHASE.BEFORE_MOVE
-        ? this.store.dispatch(phaseMoving())
-        : this.store.dispatch(phaseAfterMove());
-    }
-
-    // Все бойцы сходили, смена хода.
-    // if (fighters.every(fighter => fighter.move === MOVE_STATUSES.MOVED)) {
-    //   this.store.dispatch(turnCompleted()); // ====> effect turnCompleted ===> effect turnChangeNextFighter ===> effect nextFighter
-    // }
-
-    // Смена бойца, то есть смена фазы PHASE.AFTER_MOVE одного бойца на PHASE.BEFORE_MOVE другого бойца внутри хода
-    // const nextFighterInstance = this.calculateNextFighter(assaulterId, fighters);
-    // this.store.dispatch(turnChangeNextFighter({ nextFighter: nextFighterInstance.id, nextPartyId: nextFighterInstance.partyId }));
   }
 
   public pushSpellsLoop(spellsLoopData: ISpellsLoopData): void {

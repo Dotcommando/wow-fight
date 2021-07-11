@@ -6,10 +6,10 @@ import { Store } from '@ngrx/store';
 import { map, switchMap, tap, withLatestFrom } from 'rxjs/operators';
 
 import { DEFAULT_TURN } from '../../constants/default-turn.constant';
-import { GAME_SETTINGS, PARTIES_QUERY, PRIORITY_QUERY } from '../../constants/settings.constant';
+import { findNextFighter } from '../../helpers/find-next-fighter.helper';
 import { IBeastCharacter, IMainCharacter, InstanceOf } from '../../models/character.type';
 import { BattleService } from '../../services/battle.service';
-import { fighterHasStartedMove } from '../fighters/fighters.actions';
+import { moveStarted } from '../fighters/fighters.actions';
 import { selectCharacters, selectParties } from '../fighters/fighters.selectors';
 import { executeSpells } from '../spells/spells.actions';
 import { gameEnded, gameStarted, phaseAfterMove, turnChangeNextFighter, turnCompleted, turnStarted } from './turn.actions';
@@ -57,30 +57,11 @@ export class TurnEffects {
         this.store.select(selectParties),
       ),
       map(([ action, fighters, parties ]) => {
-        const nextPartyFighters: InstanceOf<IMainCharacter | IBeastCharacter>[] = fighters
-          .filter(fighter =>
-            fighter.partyId === (GAME_SETTINGS.partyFirst === PARTIES_QUERY.PLAYER_FIRST ? parties.playerPartyId : parties.cpuPartyId),
-          );
+        const nextPartyFighter: InstanceOf<IMainCharacter | IBeastCharacter> = findNextFighter(fighters, parties);
 
-        const nextPartyFighter = nextPartyFighters.reduce((fighter, nextFighter) => {
-          if (GAME_SETTINGS.priority === PRIORITY_QUERY.LOWEST_FIRST) {
-            if (fighter.priority < nextFighter.priority) {
-              return fighter;
-            } else {
-              return nextFighter;
-            }
-          } else {
-            if (fighter.priority > nextFighter.priority) {
-              return fighter;
-            } else {
-              return nextFighter;
-            }
-          }
-        }, nextPartyFighters[0]);
+        if (!nextPartyFighter) throw new Error('Cannot choose fighter in \'turnStarted\' effect.');
 
-        if (!nextPartyFighter) throw  new Error('Cannot choose fighter in \'turnStarted\' effect.');
-
-        return turnChangeNextFighter({ nextFighter: nextPartyFighter.id, nextPartyId: nextPartyFighter.partyId });
+        return turnChangeNextFighter({ nextFighterId: nextPartyFighter.id, nextPartyId: nextPartyFighter.partyId });
       }),
     ));
   }
@@ -88,13 +69,13 @@ export class TurnEffects {
   private turnChangeNextFighterFn$(): CreateEffectMetadata {
     return createEffect(() => this.actions$.pipe(
       ofType(turnChangeNextFighter),
-      map(() => fighterHasStartedMove()),
+      map(() => moveStarted()),
     ));
   }
 
   private moveStartedFn$(): CreateEffectMetadata {
     return createEffect(() => this.actions$.pipe(
-      ofType(fighterHasStartedMove),
+      ofType(moveStarted),
       tap(() => this.battleService.onPlayerMoveStarted()),
       switchMap(() => this.battleService.calculateAttackVectors$),
     ), { dispatch: false });

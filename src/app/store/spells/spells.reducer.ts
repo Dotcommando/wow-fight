@@ -7,7 +7,7 @@ import { ALL_SPELLS } from '../../constants/spells.constant';
 import { SPELLS } from '../../constants/spells.enum';
 import { ISpellShort } from '../../models/attack-vectors.interface';
 import { ICastedSpell } from '../../models/casted-spell.interface';
-import { addSpell, removeSpell, updateSpell } from './spells.actions';
+import { addSpell, reduceSpellExpiration, removeSpell, updateSpell } from './spells.actions';
 
 
 export const spellsFeatureKey = 'spells';
@@ -41,6 +41,19 @@ const spellsReducerFn = createReducer(
         stageOf: spellProto.stageOf,
         firedInThisTurn: false,
       }, state);
+    },
+  ),
+  on(reduceSpellExpiration,
+    (state, { spellId }: { spellId: string }) => {
+      const spell = state.entities[spellId];
+
+      if (!spell) throw new Error(`Cannot find spell by id ${spellId}.`);
+
+      if (spell.expiredIn === 0) {
+        return adapter.removeOne(spellId, state);
+      }
+
+      return adapter.updateOne({ id: spellId, changes: { expiredIn: spell.expiredIn - 1, firedInThisTurn: true }}, state);
     },
   ),
   on(updateSpell,

@@ -3,18 +3,22 @@ import { Injectable } from '@angular/core';
 import { Actions, createEffect, CreateEffectMetadata, ofType } from '@ngrx/effects';
 import { Store } from '@ngrx/store';
 
-import { tap, withLatestFrom } from 'rxjs/operators';
+import { map, tap, withLatestFrom } from 'rxjs/operators';
 
 import { BattleService } from '../../services/battle.service';
 import { selectAttack } from '../attacks/attacks.selectors';
+import { applyHit, moveCompleted } from '../fighters/fighters.actions';
 import { selectCharacters, selectParties } from '../fighters/fighters.selectors';
 import { selectTurn } from '../turn/turn.selectors';
-import { executeSpells } from './spells.actions';
+import { executeHit, executeSpells, reduceSpellExpiration } from './spells.actions';
 import { selectSpells } from './spells.selectors';
 
 @Injectable()
 export class SpellsEffects {
-  public executeSpells$ = this.executeSpellsFn();
+  public executeSpells$ = this.executeSpellsFn$();
+  public reduceSpellExpiration$ = this.reduceSpellExpirationFn$();
+  public executeHit$ = this.executeHitFn$();
+  public applyHit$ = this.applyHitFn$();
 
   constructor(
     private actions$: Actions,
@@ -22,7 +26,7 @@ export class SpellsEffects {
     private battleService: BattleService,
   ) {}
 
-  private executeSpellsFn() : CreateEffectMetadata {
+  private executeSpellsFn$(): CreateEffectMetadata {
     return createEffect(() => this.actions$.pipe(
       ofType(executeSpells),
       withLatestFrom(
@@ -35,5 +39,43 @@ export class SpellsEffects {
       tap(([ action, characters, parties, spells, currentTurn, attack ]) => this.battleService
         .pushSpellsLoop({ characters, parties, spells, currentTurn, attack })),
     ), { dispatch: false });
+  }
+
+  private reduceSpellExpirationFn$(): CreateEffectMetadata {
+    return createEffect(() => this.actions$.pipe(
+      ofType(reduceSpellExpiration),
+      map(() => executeSpells()),
+    ));
+  }
+
+  private executeHitFn$(): CreateEffectMetadata {
+    return createEffect(() => this.actions$.pipe(
+      ofType(executeHit),
+      withLatestFrom(
+        this.store.select(selectAttack),
+        this.store.select(selectCharacters),
+      ),
+      map(([ action, attack, fighters ]) => {
+        if (attack.hit) {
+          const fighter = fighters.find(fighter => fighter.id === attack.target.id);
+          const assaulter = fighters.find(fighter => fighter.id === attack.assaulter.id);
+
+          const resultHp = fighter.hp - assaulter.dps;
+          const isAlive = resultHp > 0;
+
+          return applyHit({ id: fighter.id, changes: { hp: resultHp > 0 ? resultHp : 0, isAlive }});
+        }
+
+        return applyHit({ id: '', changes: {}});
+      }),
+    ));
+  }
+
+  private applyHitFn$(): CreateEffectMetadata {
+    return createEffect(() => this.actions$.pipe(
+      ofType(applyHit),
+      withLatestFrom(this.store.select(selectTurn)),
+      map(([ action, turn ]) => moveCompleted({ id: turn.movingFighter })),
+    ));
   }
 }

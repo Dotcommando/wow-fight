@@ -25,3 +25,8 @@ export const executeSpells = createAction(
 export const executeHit = createAction(
   `[ SPELLS ] Execute Hit`,
 );
+
+export const reduceSpellExpiration = createAction(
+  `[ SPELLS ] Reduce Spell Expiration`,
+  props<{ spellId: string }>(),
+);

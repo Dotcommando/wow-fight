@@ -30,7 +30,7 @@ export const nextTurn = createAction(
 
 export const turnChangeNextFighter = createAction(
   `[ TURN ] Change active fighter`,
-  props<{ nextFighter: string; nextPartyId: string }>(),
+  props<{ nextFighterId: string; nextPartyId: string }>(),
 );
 
 export const turnCompleted = createAction(

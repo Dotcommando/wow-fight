@@ -1,8 +1,7 @@
 import { createAction, props } from '@ngrx/store';
 
-import { IAttack } from '../../models/attack-vectors.interface';
-import { IBeastCharacter, IMainCharacter, InstanceOf } from '../../models/character.type';
 import { ICastedSpell } from '../../models/casted-spell.interface';
+import { IBeastCharacter, IMainCharacter, InstanceOf } from '../../models/character.type';
 
 export const addCharacter = createAction(
   `[ FIGHTERS ] Add One`,
@@ -11,7 +10,7 @@ export const addCharacter = createAction(
 
 export const updateCharacter = createAction(
   `[ FIGHTERS ] Update One`,
-  props< { character: InstanceOf<IMainCharacter | IBeastCharacter> }>(),
+  props< { id: string; changes: Partial<InstanceOf<IMainCharacter | IBeastCharacter>> }>(),
 );
 
 export const updateCharacters = createAction(
@@ -33,17 +32,21 @@ export const toggleCharacters = createAction(
   `[ FIGHTERS ] Toggle Characters`,
 );
 
-export const fighterHasStartedMove = createAction(
+export const moveStarted = createAction(
   `[ FIGHTERS ] Move Started`,
-  // props<{ turn: ITurn }>(),
 );
 
-export const fighterHasCompletedMove = createAction(
+export const moveCompleted = createAction(
   `[ FIGHTERS ] Move Completed`,
-  props<{ attack: IAttack; assaulter: InstanceOf<IMainCharacter> }>(),
+  props<{ id: string }>(),
 );
 
 export const applySpellToCharacter = createAction(
   `[ FIGHTERS ] Apply Spell to Fighter`,
   props<{ fighterId: string; spell: ICastedSpell }>(),
+);
+
+export const applyHit = createAction(
+  `[ FIGHTERS ] Apply Hit`,
+  props<{ id: string; changes: Partial<InstanceOf<IMainCharacter | IBeastCharacter>> }>(),
 );

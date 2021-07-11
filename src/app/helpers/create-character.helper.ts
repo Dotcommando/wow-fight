@@ -2,9 +2,12 @@ import { UUID } from 'angular2-uuid';
 
 import { CHARACTERS_START_DATA } from '../constants/characters-data.constant';
 import { MOVE_STATUSES } from '../constants/move-statuses.enum';
-import { IMainCharacter, InstanceOf } from '../models/character.type';
+import { NAMES } from '../constants/name.enum';
+import { IBeastCharacter, IMainCharacter, InstanceOf } from '../models/character.type';
 import { ICreateCharacterArgs } from '../models/create-characters-args.interface';
 import { calculateBasicParams } from './calculate-basic-params.helper';
+import { SKELETON } from '../constants/beast.constant';
+import { STATUSES } from '../constants/statuses.enum';
 
 export function createCharacter(
   {
@@ -55,4 +58,42 @@ export function createCharacter(
 
     move: MOVE_STATUSES.NOT_MOVED,
   };
+}
+
+export function createBeast(name: NAMES, partyId: string, priority: number, status: STATUSES): InstanceOf<IBeastCharacter> {
+  switch (name) {
+    case NAMES.SKELETON:
+      return {
+        ...SKELETON,
+
+        id: UUID.UUID(),
+        partyId,
+        priority,
+        isAlive: true,
+        slug: name.replace(/'/g, '').toLowerCase(),
+        status,
+        dps: SKELETON.inheritedDps,
+        hp: SKELETON.inheritedHp,
+        crit: SKELETON.inheritedCrit,
+
+        move: MOVE_STATUSES.NOT_MOVED,
+      };
+
+    default:
+      return {
+        ...SKELETON,
+
+        id: UUID.UUID(),
+        partyId,
+        priority,
+        isAlive: true,
+        slug: name.replace(/'/g, '').toLowerCase(),
+        status,
+        dps: SKELETON.inheritedDps,
+        hp: SKELETON.inheritedHp,
+        crit: SKELETON.inheritedCrit,
+
+        move: MOVE_STATUSES.NOT_MOVED,
+      };
+  }
 }
