@@ -10,7 +10,6 @@ import { ALL_SPELLS } from '../constants/spells.constant';
 import { SPELL_TARGET, SPELLS } from '../constants/spells.enum';
 import { IAttackVectorProcessing } from '../models/attack-vector-processing.interface';
 import { AttackVector, IAttackVectors } from '../models/attack-vectors.interface';
-import { ICastedSpell } from '../models/casted-spell.interface';
 import { IBeastCharacter, IMainCharacter, InstanceOf } from '../models/character.type';
 import { CombinedFightersParties } from '../models/combined-fighter-parties.type';
 import { IAssaulterEnemies } from '../models/player-enemies.interface';
@@ -93,19 +92,15 @@ export class BattleService {
 
     attackVector.attackVector.cast = [];
 
-    const availableAssaulterSpells: SPELLS[] = assaulter.spells ?? [];
+    const availableAssaulterSpells: SPELLS[] = assaulter.spells.length
+      ? assaulter.spells.filter(spell => !spells.some(castedSpell => castedSpell.spellName === spell))
+      : [];
 
     if (!availableAssaulterSpells?.length) {
       return attackVector;
     }
 
-    const spellsCasted: ICastedSpell[] = spells.filter(spell => spell.assaulter === assaulter.id);
-
     for (const spell of availableAssaulterSpells) {
-      if (spellsCasted?.some(spellCasted => spellCasted.spellName === spell)) {
-        continue;
-      }
-
       const spellProto = ALL_SPELLS.find(spellItem => spellItem.name === spell);
 
       if (!spellProto) {
@@ -141,6 +136,19 @@ export class BattleService {
           },
           hit: false,
         });
+      } else {
+        if (spellProto.target === SPELL_TARGET.ENEMY) {
+          for (const enemy of enemies) {
+            attackVector.attackVector.cast.push({
+              target: { id: enemy.id, name: enemy.name },
+              spell: {
+                name: spellProto.name,
+                party: SPELL_TARGET.ENEMY,
+              },
+              hit: false,
+            });
+          }
+        }
       }
     }
 

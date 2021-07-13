@@ -113,6 +113,16 @@ export class TurnEffects {
   private phaseBeforeMoveFn$(): CreateEffectMetadata {
     return createEffect(() => this.actions$.pipe(
       ofType(phaseBeforeMove),
+      withLatestFrom(
+        this.store.select(selectTurn),
+        this.store.select(selectCharacters),
+      ),
+      tap(([ action, turn, fighters ]) => {
+        console.log(` `);
+        console.log(`Ходит:`);
+        console.log(`${fighters.find(fighter => fighter.id === turn.movingFighter).name } ${fighters.find(fighter => fighter.id === turn.movingFighter).status}`);
+        console.log(`${fighters.find(fighter => fighter.id === turn.movingFighter).id }`);
+      }),
       map(() => executeSpellsBeforeMove()),
     ));
   }

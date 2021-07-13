@@ -31,11 +31,25 @@ const spellsReducerFn = createReducer(
 
       if (!spellProto || !attack.assaulter?.id) return state;
 
-      return adapter.addOne({
-        id: UUID.UUID(),
+      const id = UUID.UUID();
+
+      console.log('Add spell');
+      console.log({
+        id,
         spellName: newSpell.name as SPELLS,
         expiredIn: spellProto.duration,
-        target: attack.target?.id ?? null,
+        target: attack.target?.id ?? attack.assaulter.id,
+        assaulter: attack.assaulter.id,
+        fireOnStage: spellProto.fireOnStage,
+        stageOf: spellProto.stageOf,
+        firedInThisTurn: false,
+      });
+
+      return adapter.addOne({
+        id,
+        spellName: newSpell.name as SPELLS,
+        expiredIn: spellProto.duration,
+        target: attack.target?.id ?? attack.assaulter.id,
         assaulter: attack.assaulter.id,
         fireOnStage: spellProto.fireOnStage,
         stageOf: spellProto.stageOf,

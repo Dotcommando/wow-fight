@@ -3,7 +3,7 @@ import { FormControl, FormGroup } from '@angular/forms';
 
 import { select, Store } from '@ngrx/store';
 
-import { Observable, Subject } from 'rxjs';
+import { combineLatest, Observable, Subject } from 'rxjs';
 import { takeUntil, tap } from 'rxjs/operators';
 
 import { NAMES } from '../constants/name.enum';
@@ -85,6 +85,8 @@ export class BattleComponent implements OnInit, OnDestroy {
   public playerBeasts: InstanceOf<IBeastCharacter>[] = [];
   public cpuBeasts: InstanceOf<IBeastCharacter>[] = [];
 
+  private currentFighter!: ICharacterShort;
+
   private playerAttack!: IAttack;
 
   public turnNumber = 1;
@@ -132,6 +134,21 @@ export class BattleComponent implements OnInit, OnDestroy {
       )
       .subscribe();
 
+    combineLatest(
+      this.currentFighterId$,
+      this.allFighters$,
+    )
+      .pipe(
+        tap(([ currentFighterId, allFighters ]) => {
+          this.currentFighter = {
+            id: currentFighterId,
+            name: allFighters.find(fighter => fighter.id === currentFighterId)?.name,
+          };
+        }),
+        takeUntil(this.destroy$),
+      )
+      .subscribe();
+
     // @ts-ignore
     this.form
       .get('playerAttacksControl')
@@ -153,10 +170,7 @@ export class BattleComponent implements OnInit, OnDestroy {
         updateAttack({
           attack: {
             ...this.playerAttack,
-            assaulter: {
-              id: this.playerCharacter.id,
-              name: this.playerCharacter.name,
-            } as ICharacterShort,
+            assaulter: this.currentFighter,
           },
         }),
       );
