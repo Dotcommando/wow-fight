@@ -9,15 +9,13 @@ import { MOVE_STATUSES } from '../../constants/move-statuses.enum';
 import { findNextFighter } from '../../helpers/find-next-fighter.helper';
 import { BattleService } from '../../services/battle.service';
 import { reduceSpellExpiration } from '../spells/spells.actions';
-import { nextTurn, phaseBeforeMove, phaseMoving, turnChangeNextFighter } from '../turn/turn.actions';
+import { turnChangeNextFighter, turnCompleted } from '../turn/turn.actions';
 import { selectTurn } from '../turn/turn.selectors';
-import { applySpellToCharacter, moveCompleted, moveStarted, updateCharacters } from './fighters.actions';
+import { applySpellToCharacter, moveCompleted, updateCharacters } from './fighters.actions';
 import { selectCharacters, selectParties } from './fighters.selectors';
 
 @Injectable()
 export class FightersEffects {
-  public moveStarted$ = this.moveStartedFn$();
-  public beforeMove$ = this.beforeMoveFn$();
   public applySpellToCharacter$ = this.applySpellToCharacterFn$();
   public moveCompleted$ = this.moveCompletedFn$();
 
@@ -26,20 +24,6 @@ export class FightersEffects {
     private store: Store,
     private battleService: BattleService,
   ) {}
-
-  private moveStartedFn$(): CreateEffectMetadata {
-    return createEffect(() => this.actions$.pipe(
-      ofType(moveStarted),
-      map(() => phaseBeforeMove()),
-    ));
-  }
-
-  private beforeMoveFn$(): CreateEffectMetadata {
-    return createEffect(() => this.actions$.pipe(
-      ofType(phaseBeforeMove),
-      map(() => phaseMoving()),
-    ));
-  }
 
   private applySpellToCharacterFn$(): CreateEffectMetadata {
     return createEffect(() => this.actions$.pipe(
@@ -78,7 +62,7 @@ export class FightersEffects {
               { id: currentFighterId, changes: { move: MOVE_STATUSES.MOVED }},
             ],
           }),
-          nextTurn(),
+          turnCompleted(),
         ];
       }),
     ));

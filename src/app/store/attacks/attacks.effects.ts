@@ -1,11 +1,14 @@
 import { Injectable } from '@angular/core';
 
 import { Actions, createEffect, CreateEffectMetadata, ofType } from '@ngrx/effects';
+import { Store } from '@ngrx/store';
 
-import { map } from 'rxjs/operators';
+import { map, withLatestFrom } from 'rxjs/operators';
 
-import { addSpell, executeSpells } from '../spells/spells.actions';
+import { PHASE } from '../../constants/phase.constant';
+import { addSpell, executeSpellsAfterMove, executeSpellsBeforeMove } from '../spells/spells.actions';
 import { phaseAfterMove } from '../turn/turn.actions';
+import { selectTurn } from '../turn/turn.selectors';
 import { clearSpellInAttack, updateAttack } from './attacks.actions';
 
 
@@ -17,6 +20,7 @@ export class AttacksEffects {
 
   constructor(
     private actions$: Actions,
+    private store: Store,
   ) {}
 
   private spellsExecutionFn$(): CreateEffectMetadata {
@@ -36,7 +40,11 @@ export class AttacksEffects {
   private clearSpellInAttackFn$(): CreateEffectMetadata {
     return createEffect(() => this.actions$.pipe(
       ofType(clearSpellInAttack),
-      map(() => executeSpells()),
+      withLatestFrom(this.store.select(selectTurn)),
+      map(([ action, { phase } ]) => phase === PHASE.BEFORE_MOVE
+        ? executeSpellsBeforeMove()
+        : executeSpellsAfterMove(),
+      ),
     ));
   }
 }

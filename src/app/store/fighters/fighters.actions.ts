@@ -54,3 +54,7 @@ export const applyHit = createAction(
   `[ FIGHTERS ] Apply Hit`,
   props<{ id: string; changes: Partial<InstanceOf<IMainCharacter | IBeastCharacter>> }>(),
 );
+
+export const resetMoveStatus = createAction(
+  `[ FIGHTERS ] Reset Move Status`,
+);

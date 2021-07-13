@@ -86,10 +86,6 @@ export class AttackComponent implements OnInit {
   }
 
   public changeAttack(attackOption: MatRadioChange): void {
-    console.log(' ');
-    console.log('Attack vector:');
-    console.log(attackOption.value);
-
     this.writeValue(attackOption.value as AttackVector);
     this.onChange(attackOption.value as AttackVector);
     this.cd.detectChanges();

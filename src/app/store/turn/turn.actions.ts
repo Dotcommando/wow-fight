@@ -16,16 +16,16 @@ export const phaseBeforeMove = createAction(
   `[ TURN ] Before Move`,
 );
 
+export const calculateAttackVector = createAction(
+  `[ TURN ] Calculation of Attack Vectors`,
+);
+
 export const phaseMoving = createAction(
   `[ TURN ] Moving`,
 );
 
 export const phaseAfterMove = createAction(
   `[ TURN ] After Move`,
-);
-
-export const nextTurn = createAction(
-  `[ TURN ] Next turn`,
 );
 
 export const turnChangeNextFighter = createAction(
@@ -35,12 +35,10 @@ export const turnChangeNextFighter = createAction(
 
 export const turnCompleted = createAction(
   `[ TURN ] Completed`,
-  // props<{ turn: ITurn }>(),
 );
 
 export const gameEnded = createAction(
   `[ END ] Game Ended`,
-  // props<{ turn: ITurn }>(),
 );
 
 export const turnUpdated = createAction(

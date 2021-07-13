@@ -22,6 +22,18 @@ export const executeSpells = createAction(
   `[ SPELLS ] Execute Spells`,
 );
 
+export const executeSpellsBeforeMove = createAction(
+  `[ SPELLS ] Execute Spells Before Move`,
+);
+
+export const executeSpellsAfterMove = createAction(
+  `[ SPELLS ] Execute Spells After Move`,
+);
+
+export const resetFiredStatus = createAction(
+  `[ SPELLS ] Reset Fired Status for All Spells`,
+);
+
 export const executeHit = createAction(
   `[ SPELLS ] Execute Hit`,
 );

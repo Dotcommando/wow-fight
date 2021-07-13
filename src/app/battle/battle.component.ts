@@ -3,21 +3,18 @@ import { FormControl, FormGroup } from '@angular/forms';
 
 import { select, Store } from '@ngrx/store';
 
-import { combineLatest, NEVER, Observable, Subject } from 'rxjs';
-import { distinctUntilChanged, map, takeUntil, tap } from 'rxjs/operators';
+import { Observable, Subject } from 'rxjs';
+import { takeUntil, tap } from 'rxjs/operators';
 
 import { NAMES } from '../constants/name.enum';
 import { PHASE } from '../constants/phase.constant';
-import { STATUSES } from '../constants/statuses.enum';
-import { compareObjects } from '../helpers/compare-arrays-of-any.helper';
 import { IAttack, IAttackVectors, ICharacterShort } from '../models/attack-vectors.interface';
-import { ICastedSpell, STAGE, STAGE_OF } from '../models/casted-spell.interface';
+import { ICastedSpell } from '../models/casted-spell.interface';
 import { IBeastCharacter, IMainCharacter, InstanceOf } from '../models/character.type';
 import { IPartiesIds } from '../models/parties-ids.interface';
 import { ITurnState } from '../models/turn.interface';
 import { BattleService } from '../services/battle.service';
 import { updateAttack } from '../store/attacks/attacks.actions';
-import { applySpellToCharacter } from '../store/fighters/fighters.actions';
 import {
   selectCharacters,
   selectCPUBeasts,
@@ -26,7 +23,6 @@ import {
   selectPlayerBeasts,
   selectPlayerCharacter,
 } from '../store/fighters/fighters.selectors';
-import { addSpell, executeHit } from '../store/spells/spells.actions';
 import { selectSpells } from '../store/spells/spells.selectors';
 import { selectCurrentFighterId, selectCurrentPhase, selectRoundNumber, selectTurn } from '../store/turn/turn.selectors';
 
@@ -101,8 +97,6 @@ export class BattleComponent implements OnInit, OnDestroy {
 
   public playerAttackVectors$: Observable<IAttackVectors | null> = this.battleService.playerAttackVectors$;
 
-  private firstTurn = true;
-
   constructor(
     private store: Store,
     private battleService: BattleService,
@@ -111,89 +105,7 @@ export class BattleComponent implements OnInit, OnDestroy {
   ngOnInit(): void {
     this.roundNumber$
       .pipe(
-        // tap((turn: ITurn | null) => this.currentFighterIdSubject$.next(turn?.movingFighter as string)),
         tap((roundNumber: number) => console.log('Round number:', roundNumber)),
-        takeUntil(this.destroy$),
-      )
-      .subscribe();
-
-    combineLatest([
-      this.turn$,
-      this.phase$,
-      this.spells$,
-      this.currentFighterId$,
-      this.allFighters$,
-      this.partiesIds$,
-    ])
-      .pipe(
-        // filter(([ turn, phase, spells, assaulterId, fighters, partiesIds ]) => !!assaulterId && [ null, PHASE.BEFORE_MOVE, PHASE.AFTER_MOVE ].includes(phase)),
-        // @ts-ignore
-        distinctUntilChanged(compareObjects),
-        map((dataArray) => {
-          // @ts-ignore
-          const [ turn, phase, spells, assaulterId, fighters, partiesIds ] = dataArray;
-          console.log(assaulterId);
-          const currentFighter = fighters.find(fighter => fighter.id === assaulterId);
-          console.log(currentFighter?.status);
-          console.log(phase);
-          if (phase === PHASE.MOVING && currentFighter?.status === STATUSES.PLAYER) {
-            console.log('It\'s player move!');
-            return NEVER;
-          } else if (phase === PHASE.MOVING && currentFighter?.status === STATUSES.CPU) {
-            console.log('It\'s CPU move!');
-          }
-
-          if (!spells.length && phase && [ PHASE.BEFORE_MOVE, PHASE.AFTER_MOVE ].includes(phase)) {
-            // @ts-ignore
-            // this.battleService.switchToNextStep({ turn, phase, spells, assaulterId, fighters, partiesIds });
-          }
-
-          return dataArray;
-        }),
-        takeUntil(this.destroy$),
-      )
-      .subscribe();
-
-    this.battleService.spellsLoop$
-      .pipe(
-        tap((data) => console.log('spellsLoopData', data)),
-        tap(({ characters, parties, spells, currentTurn, attack }) => {
-          if (attack.spell) {
-            return this.store.dispatch(addSpell({ attack }));
-          }
-
-          let spellsToExec: ICastedSpell[];
-
-          if (currentTurn.phase === PHASE.BEFORE_MOVE) {
-            spellsToExec = spells.filter(spell =>
-              // If casted by assaulter
-              (!spell.firedInThisTurn
-              && (spell.fireOnStage === STAGE.BEFORE_MOVE && spell.stageOf === STAGE_OF.ASSAULTER)
-              && spell.assaulter === currentTurn.movingFighter)
-              || (
-                // if moving fighter is target
-                !spell.firedInThisTurn
-                && (spell.fireOnStage === STAGE.BEFORE_MOVE && spell.stageOf === STAGE_OF.TARGET)
-                && spell.target === currentTurn.movingFighter));
-          } else if (currentTurn.phase === PHASE.AFTER_MOVE) {
-            spellsToExec = spells.filter(spell =>
-              // If casted by assaulter
-              (!spell.firedInThisTurn
-                && (spell.fireOnStage === STAGE.AFTER_MOVE && spell.stageOf === STAGE_OF.ASSAULTER)
-                && spell.assaulter === currentTurn.movingFighter)
-              || (
-                // if moving fighter is target
-                !spell.firedInThisTurn
-              && (spell.fireOnStage === STAGE.AFTER_MOVE && spell.stageOf === STAGE_OF.TARGET)
-              && spell.target === currentTurn.movingFighter));
-          }
-
-          if (!spellsToExec || !spellsToExec.length) {
-            return this.store.dispatch(executeHit());
-          }
-
-          return this.store.dispatch(applySpellToCharacter({ fighterId: spellsToExec[0].target, spell: spellsToExec[0] }));
-        }),
         takeUntil(this.destroy$),
       )
       .subscribe();

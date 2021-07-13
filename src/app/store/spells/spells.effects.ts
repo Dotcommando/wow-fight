@@ -3,14 +3,15 @@ import { Injectable } from '@angular/core';
 import { Actions, createEffect, CreateEffectMetadata, ofType } from '@ngrx/effects';
 import { Store } from '@ngrx/store';
 
-import { map, tap, withLatestFrom } from 'rxjs/operators';
+import { map, withLatestFrom } from 'rxjs/operators';
 
+import { PHASE } from '../../constants/phase.constant';
 import { BattleService } from '../../services/battle.service';
 import { selectAttack } from '../attacks/attacks.selectors';
 import { applyHit, moveCompleted } from '../fighters/fighters.actions';
 import { selectCharacters, selectParties } from '../fighters/fighters.selectors';
 import { selectTurn } from '../turn/turn.selectors';
-import { executeHit, executeSpells, reduceSpellExpiration } from './spells.actions';
+import { executeHit, executeSpells, executeSpellsAfterMove, executeSpellsBeforeMove, reduceSpellExpiration } from './spells.actions';
 import { selectSpells } from './spells.selectors';
 
 @Injectable()
@@ -36,15 +37,19 @@ export class SpellsEffects {
         this.store.select(selectTurn),
         this.store.select(selectAttack),
       ),
-      tap(([ action, characters, parties, spells, currentTurn, attack ]) => this.battleService
-        .pushSpellsLoop({ characters, parties, spells, currentTurn, attack })),
+      // tap(([ action, characters, parties, spells, currentTurn, attack ]) => this.battleService
+      //   .pushSpellsLoop({ characters, parties, spells, currentTurn, attack })),
     ), { dispatch: false });
   }
 
   private reduceSpellExpirationFn$(): CreateEffectMetadata {
     return createEffect(() => this.actions$.pipe(
       ofType(reduceSpellExpiration),
-      map(() => executeSpells()),
+      withLatestFrom(this.store.select(selectTurn)),
+      map(([ action, { phase } ]) => phase === PHASE.BEFORE_MOVE
+        ? executeSpellsBeforeMove()
+        : executeSpellsAfterMove(),
+      ),
     ));
   }
 

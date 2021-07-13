@@ -19,6 +19,7 @@ import {
   moveCompleted,
   nextFighter,
   removeCharacter,
+  resetMoveStatus,
   toggleCharacters,
   updateCharacter,
   updateCharacters,
@@ -192,8 +193,8 @@ const partiesReducerFn = createReducer(
           break;
 
         case SPELLS.FEAR:
-          changes.canNotAttack = true;
-          changes.canNotCast = true;
+          changes.canNotAttack = spellEntity.canNotAttack;
+          changes.canNotCast = spellEntity.canNotCast;
 
           break;
 
@@ -223,6 +224,10 @@ const partiesReducerFn = createReducer(
   ),
   on(moveCompleted,
     (state, { id }) => adapter.updateOne({ id, changes: { move: MOVE_STATUSES.MOVED }}, state),
+  ),
+  on(resetMoveStatus,
+    // @ts-ignore
+    (state) => adapter.updateMany(state.ids.map(id => state.entities[id]).map(fighter => ({ id: fighter.id, changes: { move: MOVE_STATUSES.NOT_MOVED }})), state),
   ),
 );
 

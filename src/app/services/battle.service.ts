@@ -1,26 +1,20 @@
 import { Injectable } from '@angular/core';
 
-import { select, Store } from '@ngrx/store';
+import { Store } from '@ngrx/store';
 
-import { BehaviorSubject, combineLatest, Subject } from 'rxjs';
-import { map, tap } from 'rxjs/operators';
+import { BehaviorSubject, Subject } from 'rxjs';
 
 import { MOVE_STATUSES } from '../constants/move-statuses.enum';
 import { GAME_SETTINGS, PRIORITY_QUERY } from '../constants/settings.constant';
 import { ALL_SPELLS } from '../constants/spells.constant';
 import { SPELL_TARGET, SPELLS } from '../constants/spells.enum';
-import { STATUSES } from '../constants/statuses.enum';
 import { IAttackVectorProcessing } from '../models/attack-vector-processing.interface';
 import { AttackVector, IAttackVectors } from '../models/attack-vectors.interface';
 import { ICastedSpell } from '../models/casted-spell.interface';
 import { IBeastCharacter, IMainCharacter, InstanceOf } from '../models/character.type';
 import { CombinedFightersParties } from '../models/combined-fighter-parties.type';
 import { IAssaulterEnemies } from '../models/player-enemies.interface';
-import { ISpellsLoopData } from '../models/spells-loop-data.interface';
-import { selectCharacters, selectParties } from '../store/fighters/fighters.selectors';
-import { selectSpells } from '../store/spells/spells.selectors';
 import { gameEnded } from '../store/turn/turn.actions';
-import { selectCurrentFighterId } from '../store/turn/turn.selectors';
 
 @Injectable({
   providedIn: 'root',
@@ -29,12 +23,11 @@ export class BattleService {
   constructor(
     private store: Store,
   ) {
-    this.filterPlayerAndCpuEnemies = this.filterPlayerAndCpuEnemies.bind(this);
+    this.filterActiveFighterAndEnemies = this.filterActiveFighterAndEnemies.bind(this);
+    this.calculateSkip = this.calculateSkip.bind(this);
+    this.calculateHit = this.calculateHit.bind(this);
+    this.calculateSpellCasting = this.calculateSpellCasting.bind(this);
   }
-
-  private playerAttackVectors: IAttackVectors | null = null;
-
-  private playerAttack: AttackVector | null = null;
 
   private playerAttackSubject$ = new BehaviorSubject<AttackVector | null>(null);
   public playerAttack$ = this.playerAttackSubject$.asObservable();
@@ -45,32 +38,7 @@ export class BattleService {
   private gameEndedSubject$ = new Subject<boolean>();
   public gameEnded$ = this.gameEndedSubject$.asObservable();
 
-  private playerMoveCompletedSubject$ = new Subject<void>();
-  public playerMoveCompleted$ = this.playerMoveCompletedSubject$.asObservable();
-
-  private currentRoundSubject$ = new BehaviorSubject<number>(1);
-  public currentRound$ = this.currentRoundSubject$.asObservable();
-
-  private spellsLoopSubject$ = new Subject<ISpellsLoopData>();
-  public spellsLoop$ = this.spellsLoopSubject$.asObservable();
-
-  private assaulterId$ = this.store.pipe(
-    select(selectCurrentFighterId),
-  );
-
-  private fighters$ = this.store.pipe(
-    select(selectCharacters),
-  );
-
-  private parties$ = this.store.pipe(
-    select(selectParties),
-  );
-
-  private spells$ = this.store.pipe(
-    select(selectSpells),
-  );
-
-  private filterAssaulterEnemies = ([ assaulterId, fighters, parties, spells ]: CombinedFightersParties): IAssaulterEnemies => {
+  private filterAssaulterEnemies = ([ action, assaulterId, fighters, parties, spells ]: CombinedFightersParties): IAssaulterEnemies => {
     const assaulter = fighters.find(fighter => fighter.id === assaulterId) as InstanceOf<IMainCharacter>;
     const enemyPartyId = assaulter.partyId === parties.cpuPartyId
       ? parties.playerPartyId
@@ -80,17 +48,23 @@ export class BattleService {
     return { assaulter, enemies, spells };
   };
 
-  private filterPlayerAndCpuEnemies = (fightersParties: CombinedFightersParties): IAssaulterEnemies =>
+  public filterActiveFighterAndEnemies = (fightersParties: CombinedFightersParties): IAssaulterEnemies =>
     this.filterAssaulterEnemies(fightersParties);
 
-  private calculateSkip = (assaulterEnemies: IAssaulterEnemies): IAttackVectorProcessing => ({
-    assaulterEnemies,
-    attackVector: {
-      skip: assaulterEnemies.assaulter.canNotAttack && assaulterEnemies.assaulter.canNotCast,
-    },
-  } as IAttackVectorProcessing);
+  public calculateSkip = (assaulterEnemies: IAssaulterEnemies): IAttackVectorProcessing => {
+    const allSpellsAreInAction = assaulterEnemies.assaulter?.spells?.length && assaulterEnemies.spells.length ?
+      assaulterEnemies.assaulter?.spells.every(spell => assaulterEnemies.spells.some(spellInAction => spellInAction.spellName === spell))
+      : false;
 
-  private calculateHit = (attackVector: IAttackVectorProcessing): IAttackVectorProcessing => {
+    return {
+      assaulterEnemies,
+      attackVector: {
+        skip: assaulterEnemies.assaulter.canNotAttack && (assaulterEnemies.assaulter.canNotCast || allSpellsAreInAction),
+      },
+    } as IAttackVectorProcessing;
+  };
+
+  public calculateHit = (attackVector: IAttackVectorProcessing): IAttackVectorProcessing => {
     const { assaulter, enemies } = attackVector.assaulterEnemies;
 
     if (attackVector.attackVector.skip || assaulter.canNotAttack) {
@@ -110,7 +84,7 @@ export class BattleService {
     return attackVector;
   }
 
-  private calculateSpellCasting = (attackVector: IAttackVectorProcessing): IAttackVectorProcessing => {
+  public calculateSpellCasting = (attackVector: IAttackVectorProcessing): IAttackVectorProcessing => {
     const { assaulter, enemies, spells } = attackVector.assaulterEnemies;
 
     if (attackVector.attackVector.skip || assaulter.canNotCast) {
@@ -173,46 +147,12 @@ export class BattleService {
     return attackVector;
   }
 
-  public calculateAttackVectors$ = combineLatest([
-    this.assaulterId$,
-    this.fighters$,
-    this.parties$,
-    this.spells$,
-  ])
-    .pipe(
-      map(this.filterPlayerAndCpuEnemies),
-      map(this.calculateSkip),
-      map(this.calculateHit),
-      map(this.calculateSpellCasting),
-      tap(({ attackVector }) => this.playerAttackVectors = attackVector),
-      tap(({ attackVector }) => this.playerAttackVectorsSubject$.next(attackVector)),
-    );
-
-  public incrementRound(): number {
-    const nextRound = this.currentRoundSubject$.value + 1;
-    this.currentRoundSubject$.next(nextRound);
-    return nextRound;
-  }
-
-  public getCurrentRound(): number {
-    return this.currentRoundSubject$.value;
-  }
-
   public onGameStarted(): void {
     console.log('Game Started');
   }
 
   public onTurnStarted(): void {
     console.log('Turn Started');
-  }
-
-  public onPlayerMoveStarted(): void {
-    console.log('Player Move Started');
-  }
-
-  public onTurnCompleted(): void {
-    console.log('Turn Completed');
-    this.incrementRound();
   }
 
   public onGameEnded(): void {
@@ -261,7 +201,7 @@ export class BattleService {
     return nextFromAnotherParty.reduce(this.findOneFittedFighter, fighters[0]);
   }
 
-  public pushSpellsLoop(spellsLoopData: ISpellsLoopData): void {
-    this.spellsLoopSubject$.next(spellsLoopData);
+  public setAttack(attack: IAttackVectorProcessing) {
+    this.playerAttackVectorsSubject$.next(attack.attackVector);
   }
 }

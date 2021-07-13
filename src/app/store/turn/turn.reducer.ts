@@ -38,7 +38,9 @@ const turnActivitiesReducerFn = createReducer(
     (state) => ({ ...state, phase: PHASE.AFTER_MOVE }),
   ),
   on(turnChangeNextFighter,
-    (state, { nextFighterId, nextPartyId }) => ({ ...state, movingFighter: nextFighterId, activeParty: nextPartyId }),
+    (state, { nextFighterId, nextPartyId }) => nextPartyId
+      ? ({ ...state, movingFighter: nextFighterId, activeParty: nextPartyId })
+      : ({ ...state, movingFighter: nextFighterId }),
   ),
 );
 

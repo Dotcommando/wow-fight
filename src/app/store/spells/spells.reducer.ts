@@ -7,7 +7,7 @@ import { ALL_SPELLS } from '../../constants/spells.constant';
 import { SPELLS } from '../../constants/spells.enum';
 import { ISpellShort } from '../../models/attack-vectors.interface';
 import { ICastedSpell } from '../../models/casted-spell.interface';
-import { addSpell, reduceSpellExpiration, removeSpell, updateSpell } from './spells.actions';
+import { addSpell, reduceSpellExpiration, removeSpell, resetFiredStatus, updateSpell } from './spells.actions';
 
 
 export const spellsFeatureKey = 'spells';
@@ -61,6 +61,10 @@ const spellsReducerFn = createReducer(
   ),
   on(removeSpell,
     (state, { id }) => adapter.removeOne(id, state),
+  ),
+  on(resetFiredStatus,
+    // @ts-ignore
+    (state) => adapter.updateMany(state.ids.map(id => state.entities[id]).map(spell => ({ id: spell.id, changes: { fired: false }})), state),
   ),
 );
 
