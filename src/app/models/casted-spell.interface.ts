@@ -14,6 +14,7 @@ export interface ICastedSpell {
   id: string;  // ID заклинания.
   spellName: SPELLS;   // Spell name.
   expiredIn: number;   // Через сколько ходов прекратит действовать.
+  coolDown: number;
   target: string | null; // ID цели.
   assaulter: string;   // ID атакующего.
   calledBeastId?: string; // ID призванного существа.

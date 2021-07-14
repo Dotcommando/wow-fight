@@ -13,7 +13,7 @@ export const SPELL_FEAR: ISpell = {
   addHP: false,
   reduceHP: false,
   callBeast: false,
-  coolDown: 60,
+  coolDown: 6,
   fireOnStage: STAGE.BEFORE_MOVE,
   stageOf: STAGE_OF.TARGET,
 };

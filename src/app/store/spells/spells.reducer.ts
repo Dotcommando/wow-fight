@@ -37,7 +37,8 @@ const spellsReducerFn = createReducer(
       console.log({
         id,
         spellName: newSpell.name as SPELLS,
-        expiredIn: spellProto.duration,
+        expiredIn: spellProto.duration - 1,
+        coolDown: spellProto.coolDown - 1,
         target: attack.target?.id ?? attack.assaulter.id,
         assaulter: attack.assaulter.id,
         fireOnStage: spellProto.fireOnStage,
@@ -48,7 +49,8 @@ const spellsReducerFn = createReducer(
       return adapter.addOne({
         id,
         spellName: newSpell.name as SPELLS,
-        expiredIn: spellProto.duration,
+        expiredIn: spellProto.duration - 1,
+        coolDown: spellProto.coolDown - 1,
         target: attack.target?.id ?? attack.assaulter.id,
         assaulter: attack.assaulter.id,
         fireOnStage: spellProto.fireOnStage,
@@ -63,11 +65,18 @@ const spellsReducerFn = createReducer(
 
       if (!spell) throw new Error(`Cannot find spell by id ${spellId}.`);
 
-      if (spell.expiredIn === 0) {
+      if (spell.expiredIn <= 0 && spell.coolDown <= 0) {
         return adapter.removeOne(spellId, state);
       }
 
-      return adapter.updateOne({ id: spellId, changes: { expiredIn: spell.expiredIn - 1, firedInThisTurn: true }}, state);
+      return adapter.updateOne({
+        id: spellId,
+        changes: {
+          expiredIn: spell.expiredIn - 1 < -1 ? -1 : spell.expiredIn - 1,
+          coolDown: spell.coolDown - 1 < -1 ? -1 : spell.coolDown - 1,
+          firedInThisTurn: true,
+        },
+      }, state);
     },
   ),
   on(updateSpell,
@@ -78,7 +87,7 @@ const spellsReducerFn = createReducer(
   ),
   on(resetFiredStatus,
     // @ts-ignore
-    (state) => adapter.updateMany(state.ids.map(id => state.entities[id]).map(spell => ({ id: spell.id, changes: { fired: false }})), state),
+    (state) => adapter.updateMany(state.ids.map(id => state.entities[id]).map(spell => ({ id: spell.id, changes: { firedInThisTurn: false }})), state),
   ),
 );
 

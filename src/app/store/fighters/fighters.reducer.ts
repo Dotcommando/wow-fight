@@ -168,6 +168,9 @@ const partiesReducerFn = createReducer(
 
       if (!fighter) throw new Error(`Cannot find fighter with id ${fighterId} in state, action 'applySpellToCharacter'.`);
       if (!spellEntity) throw new Error(`Cannot find spell ${spell.spellName} in list of spells.`);
+      if (spell.expiredIn < 0) {
+        return state;
+      }
 
       const changes: Partial<InstanceOf<IMainCharacter | IBeastCharacter>> = {};
 
