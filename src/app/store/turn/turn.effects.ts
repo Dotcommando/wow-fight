@@ -12,7 +12,7 @@ import { ICastedSpell, STAGE, STAGE_OF } from '../../models/casted-spell.interfa
 import { IBeastCharacter, IMainCharacter, InstanceOf } from '../../models/character.type';
 import { BattleService } from '../../services/battle.service';
 import { selectAttack } from '../attacks/attacks.selectors';
-import { applySpellToCharacter, moveStarted, playerMoveStarted, resetMoveStatus } from '../fighters/fighters.actions';
+import { applySpellToCharacter, clearDeadBeasts, moveStarted, playerMoveStarted, resetMoveStatus } from '../fighters/fighters.actions';
 import { selectCharacters, selectParties } from '../fighters/fighters.selectors';
 import { addSpell, executeHit, executeSpellsAfterMove, executeSpellsBeforeMove, resetFiredStatus } from '../spells/spells.actions';
 import { selectSpells } from '../spells/spells.selectors';
@@ -44,6 +44,7 @@ export class TurnEffects {
   public turnCompleted$ = this.turnCompletedFn$();
   public gameEnded$ = this.gameEndedFn$();
   public resetMoveStatus$ = this.resetMoveStatusFn$();
+  public clearDeadBeasts$ = this.clearDeadBeastsFn$();
 
 
   constructor(
@@ -218,8 +219,15 @@ export class TurnEffects {
       ofType(turnCompleted),
       switchMap(() => [
         resetFiredStatus(),
-        resetMoveStatus(),
+        clearDeadBeasts(),
       ]),
+    ));
+  }
+
+  private clearDeadBeastsFn$(): CreateEffectMetadata {
+    return createEffect(() => this.actions$.pipe(
+      ofType(clearDeadBeasts),
+      map(() => resetMoveStatus()),
     ));
   }
 

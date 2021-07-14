@@ -89,8 +89,6 @@ export class BattleComponent implements OnInit, OnDestroy {
 
   private playerAttack!: IAttack;
 
-  public turnNumber = 1;
-
   private destroy$ = new Subject<void>();
 
   public form: FormGroup = new FormGroup({

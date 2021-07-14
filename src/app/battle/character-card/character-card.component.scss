@@ -1,12 +1,12 @@
 :host {
-  max-width: 400px;
+  max-width: 380px;
   width: 50%;
 }
 
 .hero-image {
   position: relative;
   width: 100%;
-  height: 500px;
+  height: 450px;
   background-size: cover;
   transition: filter .5s, border .5s;
   cursor: pointer;
@@ -26,11 +26,15 @@
   }
 
   &.nerzhul {
-    background: url(../../../assets/images/ner-zhul.png) no-repeat 50% 50%;
+    background: url(../../../assets/images/ner-zhul.png) no-repeat 50% 0;
   }
 
   &.guldan {
     background: url(../../../assets/images/gul-dan.jpg) no-repeat 50% 50%;
+  }
+
+  &.skeleton {
+    background: url(../../../assets/images/skeleton.jpg) no-repeat 50% 0;
   }
 }
 

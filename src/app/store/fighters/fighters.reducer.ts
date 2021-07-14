@@ -15,7 +15,7 @@ import { IBeastCharacter, IMainCharacter, InstanceOf } from '../../models/charac
 import {
   addCharacter,
   applyHit,
-  applySpellToCharacter,
+  applySpellToCharacter, clearDeadBeasts,
   moveCompleted,
   nextFighter,
   removeCharacter,
@@ -168,7 +168,7 @@ const partiesReducerFn = createReducer(
 
       if (!fighter) throw new Error(`Cannot find fighter with id ${fighterId} in state, action 'applySpellToCharacter'.`);
       if (!spellEntity) throw new Error(`Cannot find spell ${spell.spellName} in list of spells.`);
-      if (spell.expiredIn < 0) {
+      if (spell.expiredIn < 0 || !fighter?.isAlive) {
         return state;
       }
 
@@ -229,8 +229,26 @@ const partiesReducerFn = createReducer(
     (state, { id }) => adapter.updateOne({ id, changes: { move: MOVE_STATUSES.MOVED }}, state),
   ),
   on(resetMoveStatus,
-    // @ts-ignore
-    (state) => adapter.updateMany(state.ids.map(id => state.entities[id]).map(fighter => ({ id: fighter.id, changes: { move: MOVE_STATUSES.NOT_MOVED }})), state),
+    (state) => adapter.updateMany(
+      (state.ids as string[])
+        .map(id => state.entities[id])
+        .map(fighter => ({ id: fighter.id, changes: { move: MOVE_STATUSES.NOT_MOVED }})),
+      state,
+    ),
+  ),
+  on(clearDeadBeasts,
+    (state) => {
+      const deadBeasts = (state.ids as string[])
+        .map(id => state.entities[id])
+        .filter(fighter => !fighter.isAlive);
+
+      if (!deadBeasts.length) return state;
+
+      return adapter.removeMany(
+        deadBeasts.map(beast => beast.id),
+        state,
+      );
+    },
   ),
 );
 

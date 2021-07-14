@@ -1,7 +1,7 @@
 <div class="outer outer-padding">
     <form [formGroup]="form">
 
-        <p class="centered">Раунд {{ turnNumber }}</p>
+        <p class="centered">Раунд {{ roundNumber$ | async }}</p>
         <div class="heroes-box">
             <div class="heroes-box-inner" *ngIf="playerCharacter && cpuCharacter">
                 <div class="party player-s-party">
@@ -31,8 +31,32 @@
                         </div>
                     </div>
                     <div class="beasts">
+                        <div class="main-hero" *ngFor="let beast of playerBeasts$ | async">
+                            <app-character-card
+                                    [character]="beast"
+                                    [party]="null"
+                            ></app-character-card>
 
+                            <div class="hero-data cpu">
+                                <div class="parameter hp">
+                                    HP: {{ beast.hp | round:2 }} / {{ beast.inheritedHp | round:2 }}
+                                </div>
+                                <div class="parameter dps">DPS:  {{ beast.dps | round:2 }}</div>
+                                <div class="parameter crit">Crit:  {{ beast.crit * 100 | round:2 }}% </div>
+                            </div>
+                        </div>
                     </div>
+                </div>
+
+                <div>
+                    <div class="fight-log"></div>
+                    <button
+                            mat-raised-button
+                            color="accent"
+                            (click)="turnRound()"
+                    >
+                        Сделать ход
+                    </button>
                 </div>
 
                 <div class="party cpu-s-party">
@@ -51,20 +75,23 @@
                         </div>
                     </div>
                     <div class="beasts">
+                        <div class="main-hero" *ngFor="let beast of cpuBeasts$ | async">
+                            <app-character-card
+                                    [character]="beast"
+                                    [party]="null"
+                            ></app-character-card>
 
+                            <div class="hero-data cpu">
+                                <div class="parameter hp">
+                                    HP: {{ beast.hp | round:2 }} / {{ beast.inheritedHp | round:2 }}
+                                </div>
+                                <div class="parameter dps">DPS:  {{ beast.dps | round:2 }}</div>
+                                <div class="parameter crit">Crit:  {{ beast.crit * 100 | round:2 }}% </div>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
         </div>
-
-        <p class="centered">
-            <button
-                    mat-raised-button
-                    color="accent"
-                    (click)="turnRound()"
-            >
-                Сделать ход
-            </button>
-        </p>
     </form>
 </div>

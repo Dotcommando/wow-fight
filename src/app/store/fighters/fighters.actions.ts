@@ -58,3 +58,7 @@ export const applyHit = createAction(
 export const resetMoveStatus = createAction(
   `[ FIGHTERS ] Reset Move Status`,
 );
+
+export const clearDeadBeasts = createAction(
+  `[ FIGHTERS ] Clear Dead Beasts`,
+);
