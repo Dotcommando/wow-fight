@@ -24,6 +24,10 @@ export const phaseMoving = createAction(
   `[ TURN ] Moving`,
 );
 
+export const phasePlayerMoving = createAction(
+  `[ TURN ] Player is Moving`,
+);
+
 export const phaseAfterMove = createAction(
   `[ TURN ] After Move`,
 );

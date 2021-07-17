@@ -1,7 +1,7 @@
 import { Action, createReducer, on } from '@ngrx/store';
 
 import { IAttackState } from '../../models/attack-vectors.interface';
-import { clearSpellInAttack, updateAttack } from './attacks.actions';
+import { clearSpellInAttack, updateAttack, updatePlayerAttack } from './attacks.actions';
 
 
 export const attackFeatureKey = 'attack';
@@ -16,6 +16,9 @@ export const initialState: IAttackState = {
 
 const attackReducerFn = createReducer(
   initialState,
+  on(updatePlayerAttack,
+    (state, { attack }) => ({ ...initialState, ...attack }),
+  ),
   on(updateAttack,
     (state, { attack }) => ({ ...initialState, ...attack }),
   ),

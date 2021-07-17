@@ -17,10 +17,6 @@ export const moveStarted = createAction(
   `[ FIGHTERS ] Move Started`,
 );
 
-export const playerMoveStarted = createAction(
-  `[ FIGHTERS ] Player's Move Started`,
-);
-
 export const moveCompleted = createAction(
   `[ FIGHTERS ] Move Completed`,
   props<{ id: string }>(),

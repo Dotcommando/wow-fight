@@ -224,17 +224,17 @@ const fightersReducerFn = createReducer(
   ),
   on(restoreFighterAfterSpell,
     (state, { spell }) => {
-      if (spell.expiredIn <= -1) {
+      if (spell?.expiredIn <= -1) {
+        const spellboundFighter = state.entities[spell.target];
+
+        if (!spellboundFighter) {
+          return state;
+        }
+
         const spellProto = ALL_SPELLS.find(spellPrototype => spellPrototype.name === spell.spellName);
 
         if (!spellProto) {
           throw new Error(`Cannot find spell with name ${spell.spellName} in 'restoreFighterAfterSpell'.`);
-        }
-
-        const spellboundFighter = state.entities[spell.target];
-
-        if (!spellboundFighter) {
-          throw new Error(`Cannot find fighter by id ${spell.target} in 'restoreFighterAfterSpell'.`);
         }
 
         if (spellProto.canNotCast && spellProto.canNotAttack) {

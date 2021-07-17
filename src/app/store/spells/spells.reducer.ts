@@ -91,8 +91,12 @@ const spellsReducerFn = createReducer(
     },
   ),
   on(resetFiredStatus,
-    // @ts-ignore
-    (state) => adapter.updateMany(state.ids.map(id => state.entities[id]).map(spell => ({ id: spell.id, changes: { firedInThisTurn: false }})), state),
+    (state) => adapter
+      .updateMany(state.ids
+        // @ts-ignore
+        .map(id => state.entities[id])
+        .map(spell => ({ id: spell.id, changes: { firedInThisTurn: false, coolDownReduced: false }})),
+      state),
   ),
 );
 

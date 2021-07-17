@@ -5,6 +5,8 @@ import { StoreModule } from '@ngrx/store';
 
 import { AttacksEffects } from './attacks/attacks.effects';
 import * as fromAttacksReducer from './attacks/attacks.reducer';
+import { AttackVectorsEffects } from './attackVectors/attack-vectors.effects';
+import * as fromAttackVectorsReducer from './attackVectors/attack-vectors.reducer';
 import { FightersEffects } from './fighters/fighters.effects';
 import * as fromFightersReducer from './fighters/fighters.reducer';
 import { SpellsEffects } from './spells/spells.effects';
@@ -19,7 +21,8 @@ import * as fromTurnReducer from './turn/turn.reducer';
     StoreModule.forFeature(fromTurnReducer.turnFeatureKey, fromTurnReducer.reducer),
     StoreModule.forFeature(fromSpellsReducer.spellsFeatureKey, fromSpellsReducer.reducer),
     StoreModule.forFeature(fromAttacksReducer.attackFeatureKey, fromAttacksReducer.reducer),
-    EffectsModule.forRoot([ TurnEffects, FightersEffects, AttacksEffects, SpellsEffects ]),
+    StoreModule.forFeature(fromAttackVectorsReducer.attackVectorsFeatureKey, fromAttackVectorsReducer.reducer),
+    EffectsModule.forRoot([ TurnEffects, FightersEffects, AttacksEffects, SpellsEffects, AttackVectorsEffects ]),
   ],
 })
 export class AppStoreModule {

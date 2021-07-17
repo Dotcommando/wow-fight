@@ -12,7 +12,8 @@ import { STAGE } from '../../models/casted-spell.interface';
 import { IBeastCharacter, IMainCharacter, InstanceOf } from '../../models/character.type';
 import { BattleService } from '../../services/battle.service';
 import { selectAttack } from '../attacks/attacks.selectors';
-import { clearDeadBeasts, moveStarted, playerMoveStarted, resetMoveStatus } from '../fighters/fighters.actions';
+import { resetAttackVectors, setAttackVectors } from '../attackVectors/attack-vectors.actions';
+import { clearDeadBeasts, moveStarted, resetMoveStatus } from '../fighters/fighters.actions';
 import { selectCharacters, selectParties } from '../fighters/fighters.selectors';
 import {
   executeHit,
@@ -27,7 +28,6 @@ import {
   gameStarted,
   phaseAfterMove,
   phaseBeforeMove,
-  phaseMoving,
   turnChangeNextFighter,
   turnCompleted,
   turnStarted,
@@ -50,7 +50,6 @@ export class TurnEffects {
   public gameEnded$ = this.gameEndedFn$();
   public resetMoveStatus$ = this.resetMoveStatusFn$();
   public clearDeadBeasts$ = this.clearDeadBeastsFn$();
-
 
   constructor(
     private actions$: Actions,
@@ -111,7 +110,7 @@ export class TurnEffects {
 
   private moveStartedFn$(): CreateEffectMetadata {
     return createEffect(() => this.actions$.pipe(
-      ofType(moveStarted, playerMoveStarted),
+      ofType(moveStarted),
       map(() => phaseBeforeMove()),
     ));
   }
@@ -158,8 +157,7 @@ export class TurnEffects {
       map(this.battleService.calculateSkip),
       map(this.battleService.calculateHit),
       map(this.battleService.calculateSpellCasting),
-      tap((attack: IAttackVectorProcessing) => this.battleService.setAttack(attack)),
-      map(() => phaseMoving()),
+      map((attack: IAttackVectorProcessing) => setAttackVectors({ vectors: attack.attackVector })),
     ));
   }
 
@@ -186,6 +184,7 @@ export class TurnEffects {
     return createEffect(() => this.actions$.pipe(
       ofType(turnCompleted),
       switchMap(() => [
+        resetAttackVectors(),
         resetFiredStatus(),
         clearDeadBeasts(),
       ]),

@@ -240,7 +240,6 @@ export class BattleService {
   }
 
   public setAttack(attack: IAttackVectorProcessing) {
-    console.log(attack.attackVector);
     this.playerAttackVectorsSubject$.next(attack.attackVector);
   }
 }

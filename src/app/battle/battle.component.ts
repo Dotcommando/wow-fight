@@ -4,7 +4,7 @@ import { FormControl, FormGroup } from '@angular/forms';
 import { select, Store } from '@ngrx/store';
 
 import { combineLatest, Observable, Subject } from 'rxjs';
-import { takeUntil, tap } from 'rxjs/operators';
+import { filter, map, takeUntil, tap } from 'rxjs/operators';
 
 import { NAMES } from '../constants/name.enum';
 import { PHASE } from '../constants/phase.constant';
@@ -13,8 +13,8 @@ import { ICastedSpell } from '../models/casted-spell.interface';
 import { IBeastCharacter, IMainCharacter, InstanceOf } from '../models/character.type';
 import { IPartiesIds } from '../models/parties-ids.interface';
 import { ITurnState } from '../models/turn.interface';
-import { BattleService } from '../services/battle.service';
-import { updateAttack } from '../store/attacks/attacks.actions';
+import { updatePlayerAttack } from '../store/attacks/attacks.actions';
+import { selectAttackVectors } from '../store/attackVectors/attack-vectors.selectors';
 import {
   selectCharacters,
   selectCPUBeasts,
@@ -95,17 +95,33 @@ export class BattleComponent implements OnInit, OnDestroy {
     playerAttacksControl: new FormControl(),
   });
 
-  public playerAttackVectors$: Observable<IAttackVectors | null> = this.battleService.playerAttackVectors$;
+  public playerAttackVectors$: Observable<IAttackVectors | null> = combineLatest(
+    this.store.pipe(select(selectPlayerCharacter)),
+    this.store.pipe(select(selectTurn)),
+    this.store.pipe(select(selectAttackVectors)),
+  )
+    .pipe(
+      filter(([ player, turn, attackVectors ]) => turn.movingFighter === player.id),
+      map(([ player, turn, attackVectors ]) => attackVectors),
+    );
 
   constructor(
     private store: Store,
-    private battleService: BattleService,
   ) { }
 
   ngOnInit(): void {
     this.roundNumber$
       .pipe(
-        tap((roundNumber: number) => console.log('Round number:', roundNumber)),
+        tap((roundNumber: number) => {
+          if (roundNumber > 0) {
+            if (roundNumber > 1) {
+              console.log(' ');
+              console.log(' ');
+              console.log(' ');
+            }
+            console.log('Round number:', roundNumber);
+          }
+        }),
         takeUntil(this.destroy$),
       )
       .subscribe();
@@ -165,7 +181,7 @@ export class BattleComponent implements OnInit, OnDestroy {
   public turnRound(): void {
     if (this.playerAttack) {
       this.store.dispatch(
-        updateAttack({
+        updatePlayerAttack({
           attack: {
             ...this.playerAttack,
             assaulter: this.currentFighter,

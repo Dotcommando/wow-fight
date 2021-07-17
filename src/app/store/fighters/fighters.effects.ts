@@ -13,6 +13,7 @@ import { turnChangeNextFighter, turnCompleted } from '../turn/turn.actions';
 import { selectTurn } from '../turn/turn.selectors';
 import { applySpellToCharacter, moveCompleted, updateCharacters } from './fighters.actions';
 import { selectCharacters, selectParties } from './fighters.selectors';
+import { resetAttackVectors } from '../attackVectors/attack-vectors.actions';
 
 @Injectable()
 export class FightersEffects {
@@ -53,6 +54,7 @@ export class FightersEffects {
               ],
             }),
             turnChangeNextFighter({ nextFighterId: nextFighter.id, nextPartyId: nextFighter.partyId }),
+            resetAttackVectors(),
           ];
         }
 
@@ -63,6 +65,7 @@ export class FightersEffects {
             ],
           }),
           turnCompleted(),
+          resetAttackVectors(),
         ];
       }),
     ));
