@@ -54,18 +54,12 @@ export class BattleService {
   public filterActiveFighterAndEnemies = (fightersParties: CombinedFightersParties): IAssaulterEnemies =>
     this.filterAssaulterEnemies(fightersParties);
 
-  public calculateSkip = (assaulterEnemies: IAssaulterEnemies): IAttackVectorProcessing => {
-    const allSpellsAreInAction = assaulterEnemies.assaulter?.spells?.length && assaulterEnemies.spells.length ?
-      assaulterEnemies.assaulter?.spells.every(spell => assaulterEnemies.spells.some(spellInAction => spellInAction.spellName === spell))
-      : false;
-
-    return {
-      assaulterEnemies,
-      attackVector: {
-        skip: assaulterEnemies.assaulter.canNotAttack && (assaulterEnemies.assaulter.canNotCast || allSpellsAreInAction),
-      },
-    } as IAttackVectorProcessing;
-  };
+  public calculateSkip = (assaulterEnemies: IAssaulterEnemies): IAttackVectorProcessing => ({
+    assaulterEnemies,
+    attackVector: {
+      skip: assaulterEnemies.assaulter.canNotAttack,
+    },
+  } as IAttackVectorProcessing);
 
   public calculateHit = (attackVector: IAttackVectorProcessing): IAttackVectorProcessing => {
     const { assaulter, enemies } = attackVector.assaulterEnemies;
@@ -90,7 +84,7 @@ export class BattleService {
   public calculateSpellCasting = (attackVector: IAttackVectorProcessing): IAttackVectorProcessing => {
     const { assaulter, enemies, spells } = attackVector.assaulterEnemies;
 
-    if (attackVector.attackVector.skip || assaulter.canNotCast) {
+    if (assaulter.canNotCast || !assaulter.spells) {
       return attackVector;
     }
 
@@ -163,13 +157,6 @@ export class BattleService {
     if (attack.spell) {
       return addSpell({ attack });
     }
-
-    // //////
-    // const antiStage = stage === STAGE.AFTER_MOVE ? STAGE.BEFORE_MOVE : STAGE.AFTER_MOVE;
-    // const spellsToRemove = spells.filter(spell =>
-    //
-    // );
-    // //////
 
     // If casted by assaulter
     const castedSpellsToExec: ICastedSpell[] = spells.filter(spell =>
@@ -253,6 +240,7 @@ export class BattleService {
   }
 
   public setAttack(attack: IAttackVectorProcessing) {
+    console.log(attack.attackVector);
     this.playerAttackVectorsSubject$.next(attack.attackVector);
   }
 }

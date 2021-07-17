@@ -14,7 +14,8 @@ import { selectTurn } from '../turn/turn.selectors';
 import {
   executeHit,
   executeSpellsAfterMove,
-  executeSpellsBeforeMove, reduceSpellCooldown,
+  executeSpellsBeforeMove,
+  reduceSpellCooldown,
   reduceSpellExpiration,
 } from './spells.actions';
 import { selectSpells } from './spells.selectors';
