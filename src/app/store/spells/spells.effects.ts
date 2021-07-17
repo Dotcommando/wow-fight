@@ -8,18 +8,24 @@ import { map, withLatestFrom } from 'rxjs/operators';
 import { PHASE } from '../../constants/phase.constant';
 import { BattleService } from '../../services/battle.service';
 import { selectAttack } from '../attacks/attacks.selectors';
-import { applyHit, moveCompleted } from '../fighters/fighters.actions';
-import { selectCharacters, selectParties } from '../fighters/fighters.selectors';
+import { applyHit, moveCompleted, restoreFighterAfterSpell } from '../fighters/fighters.actions';
+import { selectCharacters } from '../fighters/fighters.selectors';
 import { selectTurn } from '../turn/turn.selectors';
-import { executeHit, executeSpells, executeSpellsAfterMove, executeSpellsBeforeMove, reduceSpellExpiration } from './spells.actions';
+import {
+  executeHit,
+  executeSpellsAfterMove,
+  executeSpellsBeforeMove, reduceSpellCooldown,
+  reduceSpellExpiration,
+} from './spells.actions';
 import { selectSpells } from './spells.selectors';
 
 @Injectable()
 export class SpellsEffects {
-  public executeSpells$ = this.executeSpellsFn$();
   public reduceSpellExpiration$ = this.reduceSpellExpirationFn$();
+  public reduceSpellCooldown$ = this.reduceSpellCooldownFn$();
   public executeHit$ = this.executeHitFn$();
   public applyHit$ = this.applyHitFn$();
+  public restoreFighterAfterSpell$ = this.restoreFighterAfterSpellFn$();
 
   constructor(
     private actions$: Actions,
@@ -27,24 +33,28 @@ export class SpellsEffects {
     private battleService: BattleService,
   ) {}
 
-  private executeSpellsFn$(): CreateEffectMetadata {
-    return createEffect(() => this.actions$.pipe(
-      ofType(executeSpells),
-      withLatestFrom(
-        this.store.select(selectCharacters),
-        this.store.select(selectParties),
-        this.store.select(selectSpells),
-        this.store.select(selectTurn),
-        this.store.select(selectAttack),
-      ),
-      // tap(([ action, characters, parties, spells, currentTurn, attack ]) => this.battleService
-      //   .pushSpellsLoop({ characters, parties, spells, currentTurn, attack })),
-    ), { dispatch: false });
-  }
-
   private reduceSpellExpirationFn$(): CreateEffectMetadata {
     return createEffect(() => this.actions$.pipe(
       ofType(reduceSpellExpiration),
+      withLatestFrom(this.store.select(selectSpells)),
+      map(([ { spellId }, spells ]) => restoreFighterAfterSpell({ spell: spells.find(spell => spell.id === spellId) })),
+    ));
+  }
+
+  private reduceSpellCooldownFn$(): CreateEffectMetadata {
+    return createEffect(() => this.actions$.pipe(
+      ofType(reduceSpellCooldown),
+      withLatestFrom(this.store.select(selectTurn)),
+      map(([ action, { phase } ]) => phase === PHASE.BEFORE_MOVE
+        ? executeSpellsBeforeMove()
+        : executeSpellsAfterMove(),
+      ),
+    ));
+  }
+
+  private restoreFighterAfterSpellFn$(): CreateEffectMetadata {
+    return createEffect(() => this.actions$.pipe(
+      ofType(restoreFighterAfterSpell),
       withLatestFrom(this.store.select(selectTurn)),
       map(([ action, { phase } ]) => phase === PHASE.BEFORE_MOVE
         ? executeSpellsBeforeMove()

@@ -21,4 +21,5 @@ export interface ICastedSpell {
   fireOnStage: STAGE; // Заклинание выполнять до или после хода
   stageOf: STAGE_OF;  // атакующего или жертвы.
   firedInThisTurn: boolean; // Заклинание отработало в этом ходу.
+  coolDownReduced: boolean; // Кулдаун уменьшили на единицу в этом ходу.
 }

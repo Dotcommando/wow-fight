@@ -8,13 +8,18 @@ import { map, switchMap, tap, withLatestFrom } from 'rxjs/operators';
 import { DEFAULT_TURN } from '../../constants/default-turn.constant';
 import { findNextFighter } from '../../helpers/find-next-fighter.helper';
 import { IAttackVectorProcessing } from '../../models/attack-vector-processing.interface';
-import { ICastedSpell, STAGE, STAGE_OF } from '../../models/casted-spell.interface';
+import { STAGE } from '../../models/casted-spell.interface';
 import { IBeastCharacter, IMainCharacter, InstanceOf } from '../../models/character.type';
 import { BattleService } from '../../services/battle.service';
 import { selectAttack } from '../attacks/attacks.selectors';
-import { applySpellToCharacter, clearDeadBeasts, moveStarted, playerMoveStarted, resetMoveStatus } from '../fighters/fighters.actions';
+import { clearDeadBeasts, moveStarted, playerMoveStarted, resetMoveStatus } from '../fighters/fighters.actions';
 import { selectCharacters, selectParties } from '../fighters/fighters.selectors';
-import { addSpell, executeHit, executeSpellsAfterMove, executeSpellsBeforeMove, resetFiredStatus } from '../spells/spells.actions';
+import {
+  executeHit,
+  executeSpellsAfterMove,
+  executeSpellsBeforeMove,
+  resetFiredStatus,
+} from '../spells/spells.actions';
 import { selectSpells } from '../spells/spells.selectors';
 import {
   calculateAttackVector,
@@ -119,8 +124,8 @@ export class TurnEffects {
         this.store.select(selectCharacters),
       ),
       tap(([ action, turn, fighters ]) => {
-        console.log(` `);
-        console.log(`Ходит:`);
+        console.log(' ');
+        console.log('Ходит:');
         console.log(`${fighters.find(fighter => fighter.id === turn.movingFighter).name } ${fighters.find(fighter => fighter.id === turn.movingFighter).status}`);
         console.log(`${fighters.find(fighter => fighter.id === turn.movingFighter).id }`);
       }),
@@ -134,25 +139,9 @@ export class TurnEffects {
       withLatestFrom(
         this.store.select(selectSpells),
         this.store.select(selectTurn),
+        this.store.select(selectAttack),
       ),
-      map(([ action, spells, currentTurn ]) => {
-        const spellsToExec: ICastedSpell[] = spells.filter(spell =>
-          // If casted by assaulter
-          (!spell.firedInThisTurn
-            && (spell.fireOnStage === STAGE.BEFORE_MOVE && spell.stageOf === STAGE_OF.ASSAULTER)
-            && spell.assaulter === currentTurn.movingFighter)
-          || (
-            // if moving fighter is target
-            !spell.firedInThisTurn
-          && (spell.fireOnStage === STAGE.BEFORE_MOVE && spell.stageOf === STAGE_OF.TARGET)
-          && spell.target === currentTurn.movingFighter));
-
-        if (!spellsToExec || !spellsToExec.length) {
-          return calculateAttackVector();
-        }
-
-        return applySpellToCharacter({ fighterId: spellsToExec[0].target, spell: spellsToExec[0] });
-      }),
+      map(this.battleService.executionSpells(STAGE.BEFORE_MOVE, calculateAttackVector)),
     ));
   }
 
@@ -189,28 +178,7 @@ export class TurnEffects {
         this.store.select(selectTurn),
         this.store.select(selectAttack),
       ),
-      map(([ action, spells, currentTurn, attack ]) => {
-        if (attack.spell) {
-          return addSpell({ attack });
-        }
-
-        const spellsToExec: ICastedSpell[] = spells.filter(spell =>
-          // If casted by assaulter
-          (!spell.firedInThisTurn
-            && (spell.fireOnStage === STAGE.AFTER_MOVE && spell.stageOf === STAGE_OF.ASSAULTER)
-            && spell.assaulter === currentTurn.movingFighter)
-          || (
-            // if moving fighter is target
-            !spell.firedInThisTurn
-          && (spell.fireOnStage === STAGE.AFTER_MOVE && spell.stageOf === STAGE_OF.TARGET)
-          && spell.target === currentTurn.movingFighter));
-
-        if (!spellsToExec || !spellsToExec.length) {
-          return executeHit();
-        }
-
-        return applySpellToCharacter({ fighterId: spellsToExec[0].target, spell: spellsToExec[0] });
-      }),
+      map(this.battleService.executionSpells(STAGE.AFTER_MOVE, executeHit)),
     ));
   }
 

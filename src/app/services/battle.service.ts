@@ -10,10 +10,13 @@ import { ALL_SPELLS } from '../constants/spells.constant';
 import { SPELL_TARGET, SPELLS } from '../constants/spells.enum';
 import { IAttackVectorProcessing } from '../models/attack-vector-processing.interface';
 import { AttackVector, IAttackVectors } from '../models/attack-vectors.interface';
+import { ICastedSpell, STAGE, STAGE_OF } from '../models/casted-spell.interface';
 import { IBeastCharacter, IMainCharacter, InstanceOf } from '../models/character.type';
 import { CombinedFightersParties } from '../models/combined-fighter-parties.type';
 import { IAssaulterEnemies } from '../models/player-enemies.interface';
-import { gameEnded } from '../store/turn/turn.actions';
+import { applySpellToCharacter } from '../store/fighters/fighters.actions';
+import { addSpell, executeHit, reduceSpellCooldown } from '../store/spells/spells.actions';
+import { calculateAttackVector, gameEnded } from '../store/turn/turn.actions';
 
 @Injectable({
   providedIn: 'root',
@@ -26,6 +29,7 @@ export class BattleService {
     this.calculateSkip = this.calculateSkip.bind(this);
     this.calculateHit = this.calculateHit.bind(this);
     this.calculateSpellCasting = this.calculateSpellCasting.bind(this);
+    this.executionSpells = this.executionSpells.bind(this);
   }
 
   private playerAttackSubject$ = new BehaviorSubject<AttackVector | null>(null);
@@ -153,6 +157,45 @@ export class BattleService {
     }
 
     return attackVector;
+  }
+
+  public executionSpells = (stage: STAGE, defaultAction: typeof executeHit | typeof calculateAttackVector) => ([ action, spells, currentTurn, attack ]) => {
+    if (attack.spell) {
+      return addSpell({ attack });
+    }
+
+    // //////
+    // const antiStage = stage === STAGE.AFTER_MOVE ? STAGE.BEFORE_MOVE : STAGE.AFTER_MOVE;
+    // const spellsToRemove = spells.filter(spell =>
+    //
+    // );
+    // //////
+
+    // If casted by assaulter
+    const castedSpellsToExec: ICastedSpell[] = spells.filter(spell =>
+      !spell.coolDownReduced
+      && (spell.fireOnStage === stage && spell.stageOf === STAGE_OF.ASSAULTER)
+      && spell.assaulter === currentTurn.movingFighter);
+
+    if (castedSpellsToExec?.length) {
+      return reduceSpellCooldown({ spellId: castedSpellsToExec[0].id });
+    }
+
+    // If it's time to apply spell
+    const boundSpellsToExec: ICastedSpell[] = spells.filter(spell =>
+      !spell.firedInThisTurn
+      && (spell.fireOnStage === stage
+        && (
+          (currentTurn.movingFighter === spell.target && spell.stageOf === STAGE_OF.TARGET)
+          || (currentTurn.movingFighter === spell.assaulter && spell.stageOf === STAGE_OF.ASSAULTER)
+        )
+      ));
+
+    if (boundSpellsToExec?.length) {
+      return applySpellToCharacter({ fighterId: boundSpellsToExec[0].target, spell: boundSpellsToExec[0] });
+    }
+
+    return defaultAction();
   }
 
   public onGameStarted(): void {

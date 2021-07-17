@@ -13,15 +13,13 @@ import { createBeast, createCharacter } from '../../helpers/create-character.hel
 import { ICastedSpell } from '../../models/casted-spell.interface';
 import { IBeastCharacter, IMainCharacter, InstanceOf } from '../../models/character.type';
 import {
-  addCharacter,
   applyHit,
-  applySpellToCharacter, clearDeadBeasts,
+  applySpellToCharacter,
+  clearDeadBeasts,
   moveCompleted,
-  nextFighter,
-  removeCharacter,
   resetMoveStatus,
+  restoreFighterAfterSpell,
   toggleCharacters,
-  updateCharacter,
   updateCharacters,
 } from './fighters.actions';
 
@@ -81,24 +79,11 @@ const initialState: IFightersState = {
   },
 };
 
-const partiesReducerFn = createReducer(
+const fightersReducerFn = createReducer(
   initialState,
-  on(addCharacter,
-    (state, { character }) => adapter
-      // @ts-ignore
-      .upsertOne(character, state),
-  ),
-  on(updateCharacter,
-    (state, { id, changes }) => adapter
-      .updateOne({ id, changes }, state),
-  ),
   on(updateCharacters,
     (state, { changes }) => adapter
       .updateMany(changes, state),
-  ),
-  on(removeCharacter,
-    (state, { characterId }) => adapter
-      .removeOne(characterId, state),
   ),
   on(toggleCharacters,
     (state: IFightersState) => {
@@ -148,19 +133,6 @@ const partiesReducerFn = createReducer(
       ], state);
     },
   ),
-  on(nextFighter,
-    (state, { prev, next }: { prev: string; next: string }) => adapter
-      .updateMany([
-        {
-          id: prev,
-          changes: { move: MOVE_STATUSES.MOVED },
-        },
-        {
-          id: next,
-          changes: { move: MOVE_STATUSES.MOVING },
-        },
-      ], state),
-  ),
   on(applySpellToCharacter,
     (state: IFightersState, { fighterId, spell }: { fighterId: string; spell: ICastedSpell }) => {
       const fighter = { ...state.entities[fighterId] };
@@ -168,7 +140,7 @@ const partiesReducerFn = createReducer(
 
       if (!fighter) throw new Error(`Cannot find fighter with id ${fighterId} in state, action 'applySpellToCharacter'.`);
       if (!spellEntity) throw new Error(`Cannot find spell ${spell.spellName} in list of spells.`);
-      if (spell.expiredIn < 0 || !fighter?.isAlive) {
+      if (spell.expiredIn <= 0 || !fighter?.isAlive) {
         return state;
       }
 
@@ -250,10 +222,46 @@ const partiesReducerFn = createReducer(
       );
     },
   ),
+  on(restoreFighterAfterSpell,
+    (state, { spell }) => {
+      if (spell.expiredIn <= -1) {
+        const spellProto = ALL_SPELLS.find(spellPrototype => spellPrototype.name === spell.spellName);
+
+        if (!spellProto) {
+          throw new Error(`Cannot find spell with name ${spell.spellName} in 'restoreFighterAfterSpell'.`);
+        }
+
+        const spellboundFighter = state.entities[spell.target];
+
+        if (!spellboundFighter) {
+          throw new Error(`Cannot find fighter by id ${spell.target} in 'restoreFighterAfterSpell'.`);
+        }
+
+        if (spellProto.canNotCast && spellProto.canNotAttack) {
+          return adapter.updateOne({
+            id: spellboundFighter.id,
+            changes: { canNotAttack: false, canNotCast: false },
+          }, state);
+        } else if (spellProto.canNotAttack) {
+          return adapter.updateOne({
+            id: spellboundFighter.id,
+            changes: { canNotAttack: false },
+          }, state);
+        } else if (spellProto.canNotCast) {
+          return adapter.updateOne({
+            id: spellboundFighter.id,
+            changes: { canNotCast: false },
+          }, state);
+        }
+      }
+
+      return state;
+    },
+  ),
 );
 
 export function reducer(state: IFightersState, action: Action): IFightersState {
-  return partiesReducerFn(state, action);
+  return fightersReducerFn(state, action);
 }
 
 const {
