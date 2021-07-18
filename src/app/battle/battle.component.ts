@@ -7,6 +7,7 @@ import { combineLatest, Observable, Subject } from 'rxjs';
 import { filter, map, takeUntil, tap } from 'rxjs/operators';
 
 import { NAMES } from '../constants/name.enum';
+import { PHASE } from '../constants/phase.constant';
 import { IAttack, IAttackVectors, ICharacterShort } from '../models/attack-vectors.interface';
 import { IBeastCharacter, IMainCharacter, InstanceOf } from '../models/character.type';
 import { updatePlayerAttack } from '../store/attacks/attacks.actions';
@@ -89,9 +90,19 @@ export class BattleComponent implements OnInit, OnDestroy {
     this.currentFighterId$,
     this.playerCharacter$,
     this.winner$,
+    this.store.pipe(select(selectTurn)),
   )
     .pipe(
-      map(([ currentFighterId, player, winner ]) => player.id === currentFighterId && !winner),
+      map(([ currentFighterId, player, winner, turn ]) => player.id === currentFighterId && !winner && turn.phase === PHASE.MOVING),
+    );
+
+  public activeFighter$: Observable<InstanceOf<IMainCharacter | IBeastCharacter>> = combineLatest(
+    this.currentFighterId$,
+    this.allFighters$,
+  )
+    .pipe(
+      map(([ currentFighterId, allFighters ]) => allFighters.find(fighter => fighter.id === currentFighterId)),
+      filter((character) => Boolean(character)),
     );
 
   constructor(

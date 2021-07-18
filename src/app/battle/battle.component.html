@@ -10,13 +10,14 @@
                                 [character]="playerCharacter"
                                 [party]="'Вы'"
                         >
-                            <div class="attack-console">
+                            <div class="attack-console" [ngClass]="{ 'attack-console_disabled': !(playerCanMoving$ | async) }">
                                 <form [formGroup]="form">
                                     <app-attack
                                         formControlName="playerAttacksControl"
                                         [attackVectors]="playerAttackVectors$ | async"
                                         [allEntities]="allFighters$ | async"
                                         [playerCharacter]="playerCharacter$ | async"
+                                        [disabled]="!(playerCanMoving$ | async)"
                                     ></app-attack>
                                 </form>
                             </div>
@@ -49,7 +50,12 @@
                 </div>
 
                 <div>
-                    <div class="fight-log"></div>
+                    <div class="fight-log">
+                        <div class="now-moving">
+                            <div class="now-moving__label">Now moving: </div>
+                            <div class="now-moving__value">{{ (activeFighter$ | async).name }}, {{ (activeFighter$ | async).status }}</div>
+                        </div>
+                    </div>
                     <button
                             mat-raised-button
                             color="accent"

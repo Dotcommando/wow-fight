@@ -4,7 +4,7 @@ import { Router } from '@angular/router';
 import { Actions, createEffect, CreateEffectMetadata, ofType } from '@ngrx/effects';
 import { Store } from '@ngrx/store';
 
-import { map, switchMap, tap, withLatestFrom } from 'rxjs/operators';
+import { delay, map, switchMap, tap, withLatestFrom } from 'rxjs/operators';
 
 import { DEFAULT_TURN } from '../../constants/default-turn.constant';
 import { STATUSES } from '../../constants/statuses.enum';

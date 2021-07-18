@@ -18,12 +18,31 @@
   background: rgba(255, 255, 255, .6);
   padding: 16px 12px;
   max-width: calc(100% - 23px);
+
+  &_disabled {
+    opacity: 0;
+  }
 }
 
 .fight-log {
   position: relative;
   height: 464px;
   overflow: hidden;
+
+  .now-moving {
+    text-align: center;
+
+    &__label {
+      font-size: 18px;
+      line-height: 36px;
+    }
+
+    &__value {
+      font-weight: bold;
+      font-size: 24px;
+      line-height: 36px;
+    }
+  }
 }
 
 .centered {

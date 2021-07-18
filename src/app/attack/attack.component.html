@@ -1,5 +1,5 @@
 <div class="attack-outer">
-    <div class="attack-options" *ngIf="attackVectors">
+    <div class="attack-options" *ngIf="attackVectors && !disabled">
         <mat-radio-group [formControl]="attacksControl" aria-label="Варианты атаки">
             <ng-container *ngIf="attackVectors.hit">
                 <mat-radio-button

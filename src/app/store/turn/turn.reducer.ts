@@ -5,7 +5,7 @@ import { ITurnState } from '../../models/turn.interface';
 import {
   phaseAfterMove,
   phaseBeforeMove,
-  phaseMoving,
+  phaseMoving, phasePlayerMoving,
   resetTurns,
   setWinner,
   turnChangeNextFighter,
@@ -34,6 +34,9 @@ const turnActivitiesReducerFn = createReducer(
   ),
   on(
     phaseMoving,
+    (state) => ({ ...state, phase: PHASE.MOVING }),
+  ),
+  on(phasePlayerMoving,
     (state) => ({ ...state, phase: PHASE.MOVING }),
   ),
   on(
