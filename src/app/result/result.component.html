@@ -1,1 +1,42 @@
-<p>result works!</p>
+<div class="outer outer-padding">
+    <div class="heroes-box">
+        <div class="heroes-box-inner">
+            <div
+                *ngIf="playerName"
+                [class]="{
+                    'hero-image': true,
+                    'nerzhul': playerName === names.NERZHUL,
+                    'guldan': playerName === names.GULDAN,
+                    'won': winnerId === playerId
+                }"
+            >
+                <div class="hero-name">{{ playerName }}</div>
+                <div class="hero-status">{{ playerStatus }}</div>
+                <div class="hero-won">{{ winnerId === playerId ? 'WON!' : '' }}</div>
+            </div>
+            <div
+                *ngIf="cpuName"
+                [class]="{
+                    'hero-image': true,
+                    'nerzhul': cpuName === names.NERZHUL,
+                    'guldan': cpuName === names.GULDAN,
+                    'won': winnerId === cpuId
+                }"
+            >
+                <div class="hero-name">{{ cpuName }}</div>
+                <div class="hero-status">{{ cpuStatus }}</div>
+                <div class="hero-won">{{ winnerId === cpuId ? 'WON!' : '' }}</div>
+            </div>
+        </div>
+    </div>
+
+    <p class="centered">
+        <button
+                mat-raised-button
+                color="accent"
+                (click)="navigateToStart()"
+        >
+            Else one
+        </button>
+    </p>
+</div>

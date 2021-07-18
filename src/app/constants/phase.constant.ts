@@ -3,9 +3,3 @@ export enum PHASE {
   MOVING = 'moving',
   AFTER_MOVE = 'after move',
 }
-
-export const PHASES = [
-  PHASE.BEFORE_MOVE,
-  PHASE.MOVING,
-  PHASE.AFTER_MOVE,
-];

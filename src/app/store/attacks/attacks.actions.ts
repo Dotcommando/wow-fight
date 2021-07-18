@@ -15,3 +15,7 @@ export const updateAttack = createAction(
 export const clearSpellInAttack = createAction(
   `[ ATTACK ] Clear Spell in Attack`,
 );
+
+export const resetAttack = createAction(
+  `[ ATTACK ] Reset Attack`,
+);

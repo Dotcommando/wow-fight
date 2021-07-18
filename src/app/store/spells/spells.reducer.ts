@@ -9,6 +9,7 @@ import { ISpellShort } from '../../models/attack-vectors.interface';
 import { ICastedSpell } from '../../models/casted-spell.interface';
 import {
   addSpell,
+  clearSpells,
   reduceSpellCooldown,
   reduceSpellExpiration,
   resetFiredStatus,
@@ -97,6 +98,9 @@ const spellsReducerFn = createReducer(
         .map(id => state.entities[id])
         .map(spell => ({ id: spell.id, changes: { firedInThisTurn: false, coolDownReduced: false }})),
       state),
+  ),
+  on(clearSpells,
+    (state) => adapter.removeAll(state),
   ),
 );
 

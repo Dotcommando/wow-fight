@@ -54,3 +54,7 @@ export const setWinner = createAction(
   `[ BATTLE ] Winner`,
   props<{ winner: string | null }>(),
 );
+
+export const resetTurns = createAction(
+  `[ BATTLE ] Reset Turns`,
+);

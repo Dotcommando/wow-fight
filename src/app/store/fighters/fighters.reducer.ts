@@ -17,6 +17,7 @@ import {
   applySpellToCharacter,
   clearDeadBeasts,
   moveCompleted,
+  recreateCharacters,
   resetMoveStatus,
   restoreFighterAfterSpell,
   toggleCharacters,
@@ -257,6 +258,9 @@ const fightersReducerFn = createReducer(
 
       return state;
     },
+  ),
+  on(recreateCharacters,
+    () => ({ ...initialState }),
   ),
 );
 

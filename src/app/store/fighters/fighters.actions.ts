@@ -44,3 +44,7 @@ export const restoreFighterAfterSpell = createAction(
   `[ SPELLS ] Restore Fighter After Spell`,
   props<{ spell: ICastedSpell }>(),
 );
+
+export const recreateCharacters = createAction(
+  `[ SPELLS ] Recreate Characters`,
+);

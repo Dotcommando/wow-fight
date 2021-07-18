@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, ChangeDetectorRef, Component, forwardRef, Input, OnInit } from '@angular/core';
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component, forwardRef, Input } from '@angular/core';
 import { FormControl, NG_VALUE_ACCESSOR } from '@angular/forms';
 import { MatRadioChange } from '@angular/material/radio';
 
@@ -16,7 +16,7 @@ import { IBeastCharacter, IMainCharacter, InstanceOf } from '../models/character
     multi: true,
   }],
 })
-export class AttackComponent implements OnInit {
+export class AttackComponent {
 
   private _attackVectors!: IAttackVectors | null;
 
@@ -81,9 +81,6 @@ export class AttackComponent implements OnInit {
   constructor(
     private cd: ChangeDetectorRef,
   ) { }
-
-  ngOnInit(): void {
-  }
 
   public changeAttack(attackOption: MatRadioChange): void {
     this.writeValue(attackOption.value as AttackVector);

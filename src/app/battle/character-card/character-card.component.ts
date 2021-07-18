@@ -1,4 +1,4 @@
-import { Component, Input, OnInit } from '@angular/core';
+import { Component, Input } from '@angular/core';
 
 import { IBeastCharacter, IMainCharacter, InstanceOf } from '../../models/character.type';
 
@@ -7,7 +7,7 @@ import { IBeastCharacter, IMainCharacter, InstanceOf } from '../../models/charac
   templateUrl: './character-card.component.html',
   styleUrls: ['./character-card.component.scss'],
 })
-export class CharacterCardComponent implements OnInit {
+export class CharacterCardComponent {
     @Input()
     character: InstanceOf<IMainCharacter | IBeastCharacter> | null = null;
 
@@ -15,7 +15,4 @@ export class CharacterCardComponent implements OnInit {
     party: 'Вы' | 'CPU' | null = null;
 
     constructor() {}
-
-    // eslint-disable-next-line @angular-eslint/no-empty-lifecycle-method
-    ngOnInit(): void {}
 }

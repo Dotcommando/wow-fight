@@ -9,7 +9,3 @@ export const SKELETON: IBeastCharacter = {
   inheritedHp: 300,
   inheritedCrit: 0,
 };
-
-export const BEASTS = [
-  SKELETON,
-];

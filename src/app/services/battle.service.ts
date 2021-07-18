@@ -1,45 +1,29 @@
 import { Injectable } from '@angular/core';
 
-import { Store } from '@ngrx/store';
-
-import { BehaviorSubject, Subject } from 'rxjs';
-
 import { MOVE_STATUSES } from '../constants/move-statuses.enum';
 import { GAME_SETTINGS, PRIORITY_QUERY } from '../constants/settings.constant';
 import { ALL_SPELLS } from '../constants/spells.constant';
 import { SPELL_TARGET, SPELLS } from '../constants/spells.enum';
 import { IAttackVectorProcessing } from '../models/attack-vector-processing.interface';
-import { AttackVector, IAttackVectors } from '../models/attack-vectors.interface';
 import { ICastedSpell, STAGE, STAGE_OF } from '../models/casted-spell.interface';
 import { IBeastCharacter, IMainCharacter, InstanceOf } from '../models/character.type';
 import { CombinedFightersParties } from '../models/combined-fighter-parties.type';
 import { IAssaulterEnemies } from '../models/player-enemies.interface';
 import { applySpellToCharacter } from '../store/fighters/fighters.actions';
 import { addSpell, executeHit, reduceSpellCooldown } from '../store/spells/spells.actions';
-import { calculateAttackVector, gameEnded } from '../store/turn/turn.actions';
+import { calculateAttackVector } from '../store/turn/turn.actions';
 
 @Injectable({
   providedIn: 'root',
 })
 export class BattleService {
-  constructor(
-    private store: Store,
-  ) {
+  constructor() {
     this.filterActiveFighterAndEnemies = this.filterActiveFighterAndEnemies.bind(this);
     this.calculateSkip = this.calculateSkip.bind(this);
     this.calculateHit = this.calculateHit.bind(this);
     this.calculateSpellCasting = this.calculateSpellCasting.bind(this);
     this.executionSpells = this.executionSpells.bind(this);
   }
-
-  private playerAttackSubject$ = new BehaviorSubject<AttackVector | null>(null);
-  public playerAttack$ = this.playerAttackSubject$.asObservable();
-
-  private playerAttackVectorsSubject$ = new BehaviorSubject<IAttackVectors | null>(null); // BehaviorSubject or it will not working
-  public playerAttackVectors$ = this.playerAttackVectorsSubject$.asObservable();
-
-  private gameEndedSubject$ = new Subject<boolean>();
-  public gameEnded$ = this.gameEndedSubject$.asObservable();
 
   private filterAssaulterEnemies = ([ action, assaulterId, fighters, parties, spells ]: CombinedFightersParties): IAssaulterEnemies => {
     const assaulter = fighters.find(fighter => fighter.id === assaulterId) as InstanceOf<IMainCharacter>;
@@ -193,20 +177,6 @@ export class BattleService {
     console.log('Turn Started');
   }
 
-  public onGameEnded(): void {
-    console.log('Game Ended');
-  }
-
-  public randomGameEnd(): boolean {
-    const ended = Math.random() < 0.01;
-    if (ended) {
-      this.gameEndedSubject$.next();
-      this.store.dispatch(gameEnded());
-    }
-
-    return ended;
-  }
-
   private findOneFittedFighter = (fighter: InstanceOf<IMainCharacter | IBeastCharacter> | undefined, next: InstanceOf<IMainCharacter | IBeastCharacter>) => {
     if (!fighter) return next;
     if (GAME_SETTINGS.priority === PRIORITY_QUERY.LOWEST_FIRST) {
@@ -237,9 +207,5 @@ export class BattleService {
     const nextFromAnotherParty = fighters.filter(fighter => fighter.partyId !== currentParty && fighter.move === MOVE_STATUSES.NOT_MOVED);
 
     return nextFromAnotherParty.reduce(this.findOneFittedFighter, fighters[0]);
-  }
-
-  public setAttack(attack: IAttackVectorProcessing) {
-    this.playerAttackVectorsSubject$.next(attack.attackVector);
   }
 }

@@ -1,4 +1,5 @@
 import { Injectable } from '@angular/core';
+import { Router } from '@angular/router';
 
 import { Actions, createEffect, CreateEffectMetadata, ofType } from '@ngrx/effects';
 import { Store } from '@ngrx/store';
@@ -22,7 +23,7 @@ import {
   resetMoveStatus,
   restoreFighterAfterSpell,
 } from '../fighters/fighters.actions';
-import { selectCharacters, selectParties } from '../fighters/fighters.selectors';
+import { selectCharacters, selectCPUCharacter, selectParties, selectPlayerCharacter } from '../fighters/fighters.selectors';
 import {
   executeHit,
   executeSpellsAfterMove,
@@ -68,6 +69,7 @@ export class TurnEffects {
     private actions$: Actions,
     private store: Store,
     private battleService: BattleService,
+    private router: Router,
   ) {
   }
 
@@ -224,13 +226,6 @@ export class TurnEffects {
     ));
   }
 
-  private gameEndedFn$(): CreateEffectMetadata {
-    return createEffect(() => this.actions$.pipe(
-      ofType(gameEnded),
-      tap(() => this.battleService.onGameEnded()),
-    ), { dispatch: false });
-  }
-
   private applyHitFn$(): CreateEffectMetadata {
     return createEffect(() => this.actions$.pipe(
       ofType(applyHit),
@@ -291,6 +286,30 @@ export class TurnEffects {
         console.log(winString);
         console.log(winDecorate);
       }),
+      map(() => gameEnded()),
+    ));
+  }
+
+  private gameEndedFn$(): CreateEffectMetadata {
+    return createEffect(() => this.actions$.pipe(
+      ofType(gameEnded),
+      withLatestFrom(
+        this.store.select(selectPlayerCharacter),
+        this.store.select(selectCPUCharacter),
+        this.store.select(selectWinnerId),
+      ),
+      tap(([ action, player, cpu, winnerId ]) => this.router.navigate([
+        '/result',
+        {
+          playerName: player.name,
+          playerId: player.id,
+          playerStatus: player.status,
+          cpuName: cpu.name,
+          cpuId: cpu.id,
+          cpuStatus: cpu.status,
+          winnerId,
+        },
+      ])),
     ), { dispatch: false });
   }
 }

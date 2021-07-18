@@ -10,14 +10,13 @@ import { StoreDevtoolsModule } from '@ngrx/store-devtools';
 import { environment } from '../environments/environment';
 import { AppComponent } from './app.component';
 import { AppRoutingModule } from './app-routing.module';
-// import { AttackComponent } from './attack/attack.component';
+import { AttackComponent } from './attack/attack.component';
 import { BattleComponent } from './battle/battle.component';
 import { CharacterCardComponent } from './battle/character-card/character-card.component';
-import { ParsePipe } from './pipes/parse.pipe';
 import { RoundPipe } from './pipes/round.pipe';
+import { ResultComponent } from './result/result.component';
 import { StartComponent } from './start/start.component';
 import { AppStoreModule } from './store/app-store.module';
-import { AttackComponent } from './attack/attack.component';
 
 @NgModule({
   declarations: [
@@ -25,10 +24,9 @@ import { AttackComponent } from './attack/attack.component';
     StartComponent,
     BattleComponent,
     CharacterCardComponent,
-    // AttackComponent,
     RoundPipe,
-    ParsePipe,
     AttackComponent,
+    ResultComponent,
   ],
   imports: [
     BrowserModule,
@@ -38,8 +36,7 @@ import { AttackComponent } from './attack/attack.component';
     MatRadioModule,
     MatButtonModule,
     StoreModule.forRoot({}, {}),
-    StoreDevtoolsModule.instrument({ maxAge: 50, logOnly: environment.production }),
-
+    StoreDevtoolsModule.instrument({ maxAge: 60, logOnly: environment.production }),
     AppStoreModule,
   ],
   providers: [],

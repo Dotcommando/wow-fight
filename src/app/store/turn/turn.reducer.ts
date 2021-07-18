@@ -6,6 +6,7 @@ import {
   phaseAfterMove,
   phaseBeforeMove,
   phaseMoving,
+  resetTurns,
   setWinner,
   turnChangeNextFighter,
   turnStarted,
@@ -46,6 +47,9 @@ const turnActivitiesReducerFn = createReducer(
   ),
   on(setWinner,
     (state, { winner }) => ({ ...state, winner }),
+  ),
+  on(resetTurns,
+    () => ({ ...initialState }),
   ),
 );
 

@@ -32,3 +32,7 @@ export const reduceSpellCooldown = createAction(
   `[ SPELLS ] Reduce Spell Cooldown`,
   props<{ spellId: string }>(),
 );
+
+export const clearSpells = createAction(
+  `[ SPELLS ] Clear Spells`,
+);

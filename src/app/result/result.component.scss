@@ -1,0 +1,66 @@
+.heroes-box {
+  max-width: 100%;
+  margin-bottom: 22px;
+
+  &-inner {
+    display: flex;
+    justify-content: space-between;
+    max-height: 500px;
+  }
+}
+
+.hero-image {
+  position: relative;
+  max-width: 400px;
+  width: 50%;
+  height: 500px;
+  background-size: cover;
+  filter: grayscale(100%);
+  transition: filter .5s, border .5s;
+  cursor: pointer;
+  padding: 1px;
+  border: transparent 3px solid;
+
+  &.won {
+    filter: grayscale(0);
+  }
+
+  .hero-name,
+  .hero-status,
+  .hero-won {
+    position: absolute;
+    width: 100%;
+    height: 36px;
+    line-height: 36px;
+    font-size: 22px;
+    color: #fff;
+    font-weight: bold;
+    text-align: center;
+  }
+
+  .hero-name {
+    bottom: 72px;
+  }
+  .hero-status {
+    bottom: 36px;
+  }
+  .hero-won {
+    bottom: 0;
+  }
+}
+
+.nerzhul {
+  background: url(../../assets/images/ner-zhul.png) no-repeat 50% 50%;
+}
+
+.guldan {
+  background: url(../../assets/images/gul-dan.jpg) no-repeat 50% 50%;
+}
+
+.outer-padding {
+  padding: 20px 0;
+}
+
+.centered {
+  text-align: center;
+}

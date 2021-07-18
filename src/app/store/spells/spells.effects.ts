@@ -6,7 +6,6 @@ import { Store } from '@ngrx/store';
 import { map, withLatestFrom } from 'rxjs/operators';
 
 import { PHASE } from '../../constants/phase.constant';
-import { BattleService } from '../../services/battle.service';
 import { selectAttack } from '../attacks/attacks.selectors';
 import { applyHit, restoreFighterAfterSpell } from '../fighters/fighters.actions';
 import { selectCharacters } from '../fighters/fighters.selectors';
@@ -16,9 +15,7 @@ import {
   executeSpellsAfterMove,
   executeSpellsBeforeMove,
   reduceSpellCooldown,
-  reduceSpellExpiration,
 } from './spells.actions';
-import { selectSpells } from './spells.selectors';
 
 @Injectable()
 export class SpellsEffects {
@@ -29,7 +26,6 @@ export class SpellsEffects {
   constructor(
     private actions$: Actions,
     private store: Store,
-    private battleService: BattleService,
   ) {}
 
   private reduceSpellCooldownFn$(): CreateEffectMetadata {

@@ -60,40 +60,26 @@ export function createCharacter(
   };
 }
 
-export function createBeast(name: NAMES, partyId: string, priority: number, status: STATUSES): InstanceOf<IBeastCharacter> {
+export function createBeast(name: NAMES, partyId: string, priority: number, status: STATUSES, move = MOVE_STATUSES.MOVED): InstanceOf<IBeastCharacter> {
+  const skeleton = {
+    ...SKELETON,
+    id: UUID.UUID(),
+    partyId,
+    priority,
+    isAlive: true,
+    slug: name.replace(/'/g, '').toLowerCase(),
+    status,
+    dps: SKELETON.inheritedDps,
+    hp: SKELETON.inheritedHp,
+    crit: SKELETON.inheritedCrit,
+    move,
+  };
+
   switch (name) {
     case NAMES.SKELETON:
-      return {
-        ...SKELETON,
-
-        id: UUID.UUID(),
-        partyId,
-        priority,
-        isAlive: true,
-        slug: name.replace(/'/g, '').toLowerCase(),
-        status,
-        dps: SKELETON.inheritedDps,
-        hp: SKELETON.inheritedHp,
-        crit: SKELETON.inheritedCrit,
-
-        move: MOVE_STATUSES.NOT_MOVED,
-      };
+      return skeleton;
 
     default:
-      return {
-        ...SKELETON,
-
-        id: UUID.UUID(),
-        partyId,
-        priority,
-        isAlive: true,
-        slug: name.replace(/'/g, '').toLowerCase(),
-        status,
-        dps: SKELETON.inheritedDps,
-        hp: SKELETON.inheritedHp,
-        crit: SKELETON.inheritedCrit,
-
-        move: MOVE_STATUSES.NOT_MOVED,
-      };
+      return skeleton;
   }
 }
