@@ -20,3 +20,8 @@ export const selectCurrentFighterId = createSelector(
   selectTurn,
   (state: ITurnState): string => state.movingFighter,
 );
+
+export const selectWinnerId = createSelector(
+  selectTurn,
+  (state: ITurnState): string => state.winner,
+);

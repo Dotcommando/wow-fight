@@ -54,6 +54,7 @@
                             mat-raised-button
                             color="accent"
                             (click)="turnRound()"
+                            [disabled]="!(playerCanMoving$ | async)"
                     >
                         Сделать ход
                     </button>

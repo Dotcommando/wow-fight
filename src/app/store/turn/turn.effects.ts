@@ -6,6 +6,7 @@ import { Store } from '@ngrx/store';
 import { map, switchMap, tap, withLatestFrom } from 'rxjs/operators';
 
 import { DEFAULT_TURN } from '../../constants/default-turn.constant';
+import { STATUSES } from '../../constants/statuses.enum';
 import { findNextFighter } from '../../helpers/find-next-fighter.helper';
 import { IAttackVectorProcessing } from '../../models/attack-vector-processing.interface';
 import { STAGE } from '../../models/casted-spell.interface';
@@ -13,12 +14,20 @@ import { IBeastCharacter, IMainCharacter, InstanceOf } from '../../models/charac
 import { BattleService } from '../../services/battle.service';
 import { selectAttack } from '../attacks/attacks.selectors';
 import { resetAttackVectors, setAttackVectors } from '../attackVectors/attack-vectors.actions';
-import { clearDeadBeasts, moveStarted, resetMoveStatus } from '../fighters/fighters.actions';
+import {
+  applyHit,
+  clearDeadBeasts,
+  moveCompleted,
+  moveStarted,
+  resetMoveStatus,
+  restoreFighterAfterSpell,
+} from '../fighters/fighters.actions';
 import { selectCharacters, selectParties } from '../fighters/fighters.selectors';
 import {
   executeHit,
   executeSpellsAfterMove,
   executeSpellsBeforeMove,
+  reduceSpellExpiration,
   resetFiredStatus,
 } from '../spells/spells.actions';
 import { selectSpells } from '../spells/spells.selectors';
@@ -28,11 +37,12 @@ import {
   gameStarted,
   phaseAfterMove,
   phaseBeforeMove,
+  setWinner,
   turnChangeNextFighter,
   turnCompleted,
   turnStarted,
 } from './turn.actions';
-import { selectCurrentFighterId, selectRoundNumber, selectTurn } from './turn.selectors';
+import { selectCurrentFighterId, selectRoundNumber, selectTurn, selectWinnerId } from './turn.selectors';
 
 
 @Injectable()
@@ -50,6 +60,9 @@ export class TurnEffects {
   public gameEnded$ = this.gameEndedFn$();
   public resetMoveStatus$ = this.resetMoveStatusFn$();
   public clearDeadBeasts$ = this.clearDeadBeastsFn$();
+  public applyHit$ = this.applyHitFn$();
+  public reduceSpellExpiration$ = this.reduceSpellExpirationFn$();
+  public setWinner$ = this.setWinnerFn$();
 
   constructor(
     private actions$: Actions,
@@ -215,6 +228,69 @@ export class TurnEffects {
     return createEffect(() => this.actions$.pipe(
       ofType(gameEnded),
       tap(() => this.battleService.onGameEnded()),
+    ), { dispatch: false });
+  }
+
+  private applyHitFn$(): CreateEffectMetadata {
+    return createEffect(() => this.actions$.pipe(
+      ofType(applyHit),
+      withLatestFrom(
+        this.store.select(selectCharacters),
+        this.store.select(selectTurn),
+      ),
+      map(([ action, fighters, turn ]) => {
+        const cpu = fighters.find(fighter => fighter.status === STATUSES.CPU);
+        const player = fighters.find(fighter => fighter.status === STATUSES.PLAYER);
+
+        if (cpu.isAlive && player.isAlive) {
+          return moveCompleted({ id: turn.movingFighter });
+        }
+
+        return setWinner({ winner: player.isAlive ? player.id : cpu.id });
+      }),
+    ));
+  }
+
+  private reduceSpellExpirationFn$(): CreateEffectMetadata {
+    return createEffect(() => this.actions$.pipe(
+      ofType(reduceSpellExpiration),
+      withLatestFrom(
+        this.store.select(selectSpells),
+        this.store.select(selectCharacters),
+        this.store.select(selectTurn),
+      ),
+      map(([ { spellId }, spells, fighters, turn ]) => {
+        const cpu = fighters.find(fighter => fighter.status === STATUSES.CPU);
+        const player = fighters.find(fighter => fighter.status === STATUSES.PLAYER);
+
+        if (cpu.isAlive && player.isAlive) {
+          return restoreFighterAfterSpell({ spell: spells.find(spell => spell.id === spellId) });
+        }
+
+        return setWinner({ winner: player.isAlive ? player.id : cpu.id });
+      }),
+    ));
+  }
+
+  private setWinnerFn$(): CreateEffectMetadata {
+    return createEffect(() => this.actions$.pipe(
+      ofType(setWinner),
+      withLatestFrom(
+        this.store.select(selectWinnerId),
+        this.store.select(selectCharacters),
+      ),
+      tap(([ action, winnerId, fighters ]) => {
+        const winner = fighters.find(fighter => fighter.id === winnerId);
+        if (!winner) {
+          throw new Error(`Cannot find winner in 'setWinnerFn$'.`);
+        }
+        console.log(' ');
+        const winString = `$$$   Победил ${ winner.status === STATUSES.PLAYER ? 'игрок' : 'CPU' } ${ winner.name }.   $$$`;
+        const winDecorate = '$'.repeat(winString.length);
+        console.log(winDecorate);
+        console.log(winString);
+        console.log(winDecorate);
+      }),
     ), { dispatch: false });
   }
 }

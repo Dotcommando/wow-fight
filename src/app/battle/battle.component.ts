@@ -7,24 +7,18 @@ import { combineLatest, Observable, Subject } from 'rxjs';
 import { filter, map, takeUntil, tap } from 'rxjs/operators';
 
 import { NAMES } from '../constants/name.enum';
-import { PHASE } from '../constants/phase.constant';
 import { IAttack, IAttackVectors, ICharacterShort } from '../models/attack-vectors.interface';
-import { ICastedSpell } from '../models/casted-spell.interface';
 import { IBeastCharacter, IMainCharacter, InstanceOf } from '../models/character.type';
-import { IPartiesIds } from '../models/parties-ids.interface';
-import { ITurnState } from '../models/turn.interface';
 import { updatePlayerAttack } from '../store/attacks/attacks.actions';
 import { selectAttackVectors } from '../store/attackVectors/attack-vectors.selectors';
 import {
   selectCharacters,
   selectCPUBeasts,
   selectCPUCharacter,
-  selectParties,
   selectPlayerBeasts,
   selectPlayerCharacter,
 } from '../store/fighters/fighters.selectors';
-import { selectSpells } from '../store/spells/spells.selectors';
-import { selectCurrentFighterId, selectCurrentPhase, selectRoundNumber, selectTurn } from '../store/turn/turn.selectors';
+import { selectCurrentFighterId, selectRoundNumber, selectTurn, selectWinnerId } from '../store/turn/turn.selectors';
 
 
 @Component({
@@ -56,20 +50,8 @@ export class BattleComponent implements OnInit, OnDestroy {
     select(selectCharacters),
   );
 
-  public turn$: Observable<ITurnState> = this.store.pipe(
-    select(selectTurn),
-  );
-
-  public spells$: Observable<ICastedSpell[]> = this.store.pipe(
-    select(selectSpells),
-  );
-
-  public partiesIds$: Observable<IPartiesIds> = this.store.pipe(
-    select(selectParties),
-  );
-
-  public phase$: Observable<PHASE | null> = this.store.pipe(
-    select(selectCurrentPhase),
+  public winner$: Observable<string | null> = this.store.pipe(
+    select(selectWinnerId),
   );
 
   public roundNumber$: Observable<number> = this.store.pipe(
@@ -86,9 +68,7 @@ export class BattleComponent implements OnInit, OnDestroy {
   public cpuBeasts: InstanceOf<IBeastCharacter>[] = [];
 
   private currentFighter!: ICharacterShort;
-
   private playerAttack!: IAttack;
-
   private destroy$ = new Subject<void>();
 
   public form: FormGroup = new FormGroup({
@@ -103,6 +83,15 @@ export class BattleComponent implements OnInit, OnDestroy {
     .pipe(
       filter(([ player, turn, attackVectors ]) => turn.movingFighter === player.id),
       map(([ player, turn, attackVectors ]) => attackVectors),
+    );
+
+  public playerCanMoving$: Observable<boolean> = combineLatest(
+    this.currentFighterId$,
+    this.playerCharacter$,
+    this.winner$,
+  )
+    .pipe(
+      map(([ currentFighterId, player, winner ]) => player.id === currentFighterId && !winner),
     );
 
   constructor(

@@ -5,4 +5,5 @@ export interface ITurnState {
   activeParty: string;
   movingFighter: string;
   phase: PHASE | null;
+  winner: string | null;
 }

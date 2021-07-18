@@ -8,7 +8,7 @@ import { map, withLatestFrom } from 'rxjs/operators';
 import { PHASE } from '../../constants/phase.constant';
 import { BattleService } from '../../services/battle.service';
 import { selectAttack } from '../attacks/attacks.selectors';
-import { applyHit, moveCompleted, restoreFighterAfterSpell } from '../fighters/fighters.actions';
+import { applyHit, restoreFighterAfterSpell } from '../fighters/fighters.actions';
 import { selectCharacters } from '../fighters/fighters.selectors';
 import { selectTurn } from '../turn/turn.selectors';
 import {
@@ -22,10 +22,8 @@ import { selectSpells } from './spells.selectors';
 
 @Injectable()
 export class SpellsEffects {
-  public reduceSpellExpiration$ = this.reduceSpellExpirationFn$();
   public reduceSpellCooldown$ = this.reduceSpellCooldownFn$();
   public executeHit$ = this.executeHitFn$();
-  public applyHit$ = this.applyHitFn$();
   public restoreFighterAfterSpell$ = this.restoreFighterAfterSpellFn$();
 
   constructor(
@@ -33,14 +31,6 @@ export class SpellsEffects {
     private store: Store,
     private battleService: BattleService,
   ) {}
-
-  private reduceSpellExpirationFn$(): CreateEffectMetadata {
-    return createEffect(() => this.actions$.pipe(
-      ofType(reduceSpellExpiration),
-      withLatestFrom(this.store.select(selectSpells)),
-      map(([ { spellId }, spells ]) => restoreFighterAfterSpell({ spell: spells.find(spell => spell.id === spellId) })),
-    ));
-  }
 
   private reduceSpellCooldownFn$(): CreateEffectMetadata {
     return createEffect(() => this.actions$.pipe(
@@ -84,14 +74,6 @@ export class SpellsEffects {
 
         return applyHit({ id: '', changes: {}});
       }),
-    ));
-  }
-
-  private applyHitFn$(): CreateEffectMetadata {
-    return createEffect(() => this.actions$.pipe(
-      ofType(applyHit),
-      withLatestFrom(this.store.select(selectTurn)),
-      map(([ action, turn ]) => moveCompleted({ id: turn.movingFighter })),
     ));
   }
 }

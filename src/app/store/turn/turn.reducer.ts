@@ -6,6 +6,7 @@ import {
   phaseAfterMove,
   phaseBeforeMove,
   phaseMoving,
+  setWinner,
   turnChangeNextFighter,
   turnStarted,
 } from './turn.actions';
@@ -18,6 +19,7 @@ const initialState: ITurnState = {
   activeParty: '',
   movingFighter: '',
   phase: null,
+  winner: null,
 };
 
 const turnActivitiesReducerFn = createReducer(
@@ -41,6 +43,9 @@ const turnActivitiesReducerFn = createReducer(
     (state, { nextFighterId, nextPartyId }) => nextPartyId
       ? ({ ...state, movingFighter: nextFighterId, activeParty: nextPartyId })
       : ({ ...state, movingFighter: nextFighterId }),
+  ),
+  on(setWinner,
+    (state, { winner }) => ({ ...state, winner }),
   ),
 );
 

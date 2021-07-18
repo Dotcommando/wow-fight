@@ -50,6 +50,7 @@ export const turnUpdated = createAction(
   props<{ turn: ITurnState }>(),
 );
 
-export const deleteBattle = createAction(
-  `[ BATTLE ] Delete Battle`,
+export const setWinner = createAction(
+  `[ BATTLE ] Winner`,
+  props<{ winner: string | null }>(),
 );

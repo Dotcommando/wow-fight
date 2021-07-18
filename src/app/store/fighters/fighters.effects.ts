@@ -7,13 +7,12 @@ import { map, mergeMap, withLatestFrom } from 'rxjs/operators';
 
 import { MOVE_STATUSES } from '../../constants/move-statuses.enum';
 import { findNextFighter } from '../../helpers/find-next-fighter.helper';
-import { BattleService } from '../../services/battle.service';
+import { resetAttackVectors } from '../attackVectors/attack-vectors.actions';
 import { reduceSpellExpiration } from '../spells/spells.actions';
 import { turnChangeNextFighter, turnCompleted } from '../turn/turn.actions';
 import { selectTurn } from '../turn/turn.selectors';
 import { applySpellToCharacter, moveCompleted, updateCharacters } from './fighters.actions';
 import { selectCharacters, selectParties } from './fighters.selectors';
-import { resetAttackVectors } from '../attackVectors/attack-vectors.actions';
 
 @Injectable()
 export class FightersEffects {
@@ -23,7 +22,6 @@ export class FightersEffects {
   constructor(
     private actions$: Actions,
     private store: Store,
-    private battleService: BattleService,
   ) {}
 
   private applySpellToCharacterFn$(): CreateEffectMetadata {

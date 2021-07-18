@@ -5,4 +5,5 @@ export const DEFAULT_TURN: ITurnState = {
   activeParty: '',
   movingFighter: '',
   phase: null,
+  winner: null,
 };
