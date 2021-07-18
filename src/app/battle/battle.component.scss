@@ -1,0 +1,31 @@
+.heroes-box-inner {
+  display: flex;
+  justify-content: space-between;
+}
+
+.party {
+  width: 400px;
+}
+
+.hero-data {
+  margin: 0 0 40px 0;
+}
+
+.attack-console {
+  position: absolute;
+  left: 23px;
+  bottom: 40px;
+  background: rgba(255, 255, 255, .6);
+  padding: 16px 12px;
+  max-width: calc(100% - 23px);
+}
+
+.fight-log {
+  position: relative;
+  height: 464px;
+  overflow: hidden;
+}
+
+.centered {
+  text-align: center;
+}

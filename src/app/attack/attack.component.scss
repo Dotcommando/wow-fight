@@ -1,0 +1,21 @@
+.attack-options {
+  & > * {
+    max-width: 100%;
+    display: flex;
+    flex-direction: column;
+  }
+}
+
+.wrap-mat-radio-label {
+  white-space: normal;
+}
+
+.mat-radio-group {
+  .mat-radio-button {
+    margin: 0 0 16px 0;
+
+    &:last-child {
+      margin: 0;
+    }
+  }
+}

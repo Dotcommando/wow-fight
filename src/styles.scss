@@ -1,1 +1,39 @@
-/* You can add global styles to this file, and also import other style files */
+@import '@angular/material/prebuilt-themes/indigo-pink.css';
+
+$line-height-md: 22px;
+$font-size-md: 16px;
+
+* {
+  -webkit-box-sizing: border-box;
+  box-sizing: border-box;
+}
+
+html, body {
+  margin:0;
+  padding:0;
+  min-width: 320px;
+  height: 100%;
+}
+
+body {
+  font-size: $font-size-md;
+  font-family: -apple-system, BlinkMacSystemFont, Roboto, Calibri, sans-serif;
+  color: #000;
+}
+
+p {
+  font-size: $font-size-md;
+  line-height: $line-height-md;
+  margin: 0 0 $line-height-md 0;
+}
+
+a:link { color: #182340; }
+a:visited { color: #182340; }
+a:hover { color: #3c9ffc; }
+a:active { color: #3c9ffc; }
+
+.outer {
+  max-width: 1180px;
+  margin: 0 auto;
+  position: relative;
+}
