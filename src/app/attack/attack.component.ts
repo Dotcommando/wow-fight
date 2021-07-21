@@ -56,16 +56,16 @@ export class AttackComponent {
   }
 
 
-  private _disabled = false;
+  private _hidden = false;
 
   @Input()
-  set disabled(value: boolean) {
-    this._disabled = value;
+  set hidden(value: boolean) {
+    this._hidden = value;
     this.cd.markForCheck();
   }
 
-  get disabled(): boolean {
-    return this._disabled;
+  get hidden(): boolean {
+    return this._hidden;
   }
 
 

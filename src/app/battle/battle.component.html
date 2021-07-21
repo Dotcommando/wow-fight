@@ -17,7 +17,7 @@
                                         [attackVectors]="playerAttackVectors$ | async"
                                         [allEntities]="allFighters$ | async"
                                         [playerCharacter]="playerCharacter$ | async"
-                                        [disabled]="!(playerCanMoving$ | async)"
+                                        [hidden]="!(playerCanMoving$ | async)"
                                     ></app-attack>
                                 </form>
                             </div>
