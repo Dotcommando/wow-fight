@@ -2,6 +2,7 @@ import { createAction, props } from '@ngrx/store';
 
 import { ICastedSpell } from '../../models/casted-spell.interface';
 import { IBeastCharacter, IMainCharacter, InstanceOf } from '../../models/character.type';
+import { IDamage } from '../../models/damage.interface';
 
 
 export const updateCharacters = createAction(
@@ -24,7 +25,7 @@ export const moveCompleted = createAction(
 
 export const applySpellToCharacter = createAction(
   `[ FIGHTERS ] Apply Spell to Fighter`,
-  props<{ fighterId: string; spell: ICastedSpell }>(),
+  props<{ damage: IDamage }>(),
 );
 
 export const applyHit = createAction(

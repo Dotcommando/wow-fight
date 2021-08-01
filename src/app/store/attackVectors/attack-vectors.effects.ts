@@ -3,7 +3,8 @@ import { Injectable } from '@angular/core';
 import { Actions, createEffect, CreateEffectMetadata, ofType } from '@ngrx/effects';
 import { Store } from '@ngrx/store';
 
-import { map, withLatestFrom } from 'rxjs/operators';
+import { interval, of } from 'rxjs';
+import { delayWhen, map, withLatestFrom } from 'rxjs/operators';
 
 import { STATUSES } from '../../constants/statuses.enum';
 import { selectCharacters } from '../fighters/fighters.selectors';
@@ -27,6 +28,10 @@ export class AttackVectorsEffects {
       withLatestFrom(
         this.store.select(selectTurn),
         this.store.select(selectCharacters),
+      ),
+      delayWhen(([ action, turn, fighters ]) => fighters.find(fighter => fighter.id === turn.movingFighter).status !== STATUSES.PLAYER
+        ? interval(3000)
+        : of([ action, turn, fighters ]),
       ),
       map(([ action, { movingFighter }, fighters ]) =>
         fighters.find(fighter => fighter.id === movingFighter).status === STATUSES.PLAYER

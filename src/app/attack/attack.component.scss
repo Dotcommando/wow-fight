@@ -4,6 +4,10 @@
     display: flex;
     flex-direction: column;
   }
+
+  &_disabled {
+    opacity: 0;
+  }
 }
 
 .wrap-mat-radio-label {

@@ -6,12 +6,11 @@ import { Store } from '@ngrx/store';
 import { map, withLatestFrom } from 'rxjs/operators';
 
 import { PHASE } from '../../constants/phase.constant';
-import { selectAttack } from '../attacks/attacks.selectors';
-import { applyHit, restoreFighterAfterSpell } from '../fighters/fighters.actions';
-import { selectCharacters } from '../fighters/fighters.selectors';
+import { setHitDamage, setSpellDamage } from '../damage/damage.actions';
+import { selectDamage } from '../damage/damage.selectors';
+import { applyHit, applySpellToCharacter, restoreFighterAfterSpell } from '../fighters/fighters.actions';
 import { selectTurn } from '../turn/turn.selectors';
 import {
-  executeHit,
   executeSpellsAfterMove,
   executeSpellsBeforeMove,
   reduceSpellCooldown,
@@ -20,8 +19,9 @@ import {
 @Injectable()
 export class SpellsEffects {
   public reduceSpellCooldown$ = this.reduceSpellCooldownFn$();
-  public executeHit$ = this.executeHitFn$();
+  public setHitDamage$ = this.setHitDamageFn$();
   public restoreFighterAfterSpell$ = this.restoreFighterAfterSpellFn$();
+  public setSpellDamage$ = this.setSpellDamageFn$();
 
   constructor(
     private actions$: Actions,
@@ -50,26 +50,29 @@ export class SpellsEffects {
     ));
   }
 
-  private executeHitFn$(): CreateEffectMetadata {
+  private setHitDamageFn$(): CreateEffectMetadata {
     return createEffect(() => this.actions$.pipe(
-      ofType(executeHit),
+      ofType(setHitDamage),
       withLatestFrom(
-        this.store.select(selectAttack),
-        this.store.select(selectCharacters),
+        this.store.select(selectDamage),
       ),
-      map(([ action, attack, fighters ]) => {
-        if (attack.hit) {
-          const fighter = fighters.find(fighter => fighter.id === attack.target.id);
-          const assaulter = fighters.find(fighter => fighter.id === attack.assaulter.id);
-
-          const resultHp = fighter.hp - assaulter.dps;
-          const isAlive = resultHp > 0;
-
-          return applyHit({ id: fighter.id, changes: { hp: resultHp > 0 ? resultHp : 0, isAlive }});
+      map(([ action, damage ]) => {
+        if (damage.damage > 0) {
+          return applyHit({ ...damage.targetChanges });
         }
 
         return applyHit({ id: '', changes: {}});
       }),
+    ));
+  }
+
+  private setSpellDamageFn$(): CreateEffectMetadata {
+    return createEffect(() => this.actions$.pipe(
+      ofType(setSpellDamage),
+      withLatestFrom(
+        this.store.select(selectDamage),
+      ),
+      map(([ action, damage ]) => applySpellToCharacter({ damage })),
     ));
   }
 }

@@ -3,14 +3,15 @@ import { GAME_SETTINGS, PARTIES_QUERY, PRIORITY_QUERY } from '../constants/setti
 import { IBeastCharacter, IMainCharacter, InstanceOf } from '../models/character.type';
 
 export function findNextFighter(fighters: InstanceOf<IMainCharacter | IBeastCharacter>[], parties: { playerPartyId: string; cpuPartyId: string }): InstanceOf<IMainCharacter | IBeastCharacter> | null {
-  let nextPartyFighters: InstanceOf<IMainCharacter | IBeastCharacter>[] = fighters
+  const aliveFighters = fighters.filter(fighter => fighter.isAlive);
+  let nextPartyFighters: InstanceOf<IMainCharacter | IBeastCharacter>[] = aliveFighters
     .filter(fighter => fighter.move === MOVE_STATUSES.NOT_MOVED)
     .filter(fighter =>
       fighter.partyId === (GAME_SETTINGS.partyFirst === PARTIES_QUERY.PLAYER_FIRST ? parties.playerPartyId : parties.cpuPartyId),
     );
 
   if (!nextPartyFighters?.length) {
-    nextPartyFighters = fighters.filter(fighter => fighter.move === MOVE_STATUSES.NOT_MOVED);
+    nextPartyFighters = aliveFighters.filter(fighter => fighter.move === MOVE_STATUSES.NOT_MOVED);
   }
 
   const nextPartyFighter = nextPartyFighters.reduce((fighter, nextFighter) => {

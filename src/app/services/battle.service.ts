@@ -9,7 +9,7 @@ import { ICastedSpell, STAGE, STAGE_OF } from '../models/casted-spell.interface'
 import { IBeastCharacter, IMainCharacter, InstanceOf } from '../models/character.type';
 import { CombinedFightersParties } from '../models/combined-fighter-parties.type';
 import { IAssaulterEnemies } from '../models/player-enemies.interface';
-import { applySpellToCharacter } from '../store/fighters/fighters.actions';
+import { setSpellDamage } from '../store/damage/damage.actions';
 import { addSpell, executeHit, reduceSpellCooldown } from '../store/spells/spells.actions';
 import { calculateAttackVector } from '../store/turn/turn.actions';
 
@@ -137,7 +137,7 @@ export class BattleService {
     return attackVector;
   }
 
-  public executionSpells = (stage: STAGE, defaultAction: typeof executeHit | typeof calculateAttackVector) => ([ action, spells, currentTurn, attack ]) => {
+  public executionSpells = (stage: STAGE, defaultAction: typeof executeHit | typeof calculateAttackVector) => ([ action, spells, currentTurn, attack, fighters ]) => {
     if (attack.spell) {
       return addSpell({ attack });
     }
@@ -163,7 +163,12 @@ export class BattleService {
       ));
 
     if (boundSpellsToExec?.length) {
-      return applySpellToCharacter({ fighterId: boundSpellsToExec[0].target, spell: boundSpellsToExec[0] });
+      const assaulterId = fighters.ids.find(fighterId => fighterId === boundSpellsToExec[0].assaulter);
+      const targetId = fighters.ids.find(fighterId => fighterId === boundSpellsToExec[0].target);
+      const assaulter = fighters.entities[assaulterId] ?? null;
+      const target = fighters.entities[targetId] ?? null;
+
+      return setSpellDamage({ spell: boundSpellsToExec[0], target, assaulter });
     }
 
     return defaultAction();

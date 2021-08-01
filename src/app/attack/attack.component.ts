@@ -44,7 +44,7 @@ export class AttackComponent {
   }
 
 
-  _playerCharacter!: InstanceOf<IMainCharacter | IBeastCharacter> | null;
+  private _playerCharacter!: InstanceOf<IMainCharacter | IBeastCharacter> | null;
 
   @Input()
   set playerCharacter(newPlayerCharacter: InstanceOf<IMainCharacter | IBeastCharacter> | null) {
@@ -53,6 +53,19 @@ export class AttackComponent {
 
   get playerCharacter(): InstanceOf<IMainCharacter | IBeastCharacter> | null {
     return this._playerCharacter;
+  }
+
+
+  private _hidden = false;
+
+  @Input()
+  set hidden(value: boolean) {
+    this._hidden = value;
+    this.cd.markForCheck();
+  }
+
+  get hidden(): boolean {
+    return this._hidden;
   }
 
 

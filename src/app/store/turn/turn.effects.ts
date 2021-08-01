@@ -23,7 +23,7 @@ import {
   resetMoveStatus,
   restoreFighterAfterSpell,
 } from '../fighters/fighters.actions';
-import { selectCharacters, selectCPUCharacter, selectParties, selectPlayerCharacter } from '../fighters/fighters.selectors';
+import { selectCharacters, selectCPUCharacter, selectFighters, selectParties, selectPlayerCharacter } from '../fighters/fighters.selectors';
 import {
   executeHit,
   executeSpellsAfterMove,
@@ -154,6 +154,7 @@ export class TurnEffects {
         this.store.select(selectSpells),
         this.store.select(selectTurn),
         this.store.select(selectAttack),
+        this.store.select(selectFighters),
       ),
       map(this.battleService.executionSpells(STAGE.BEFORE_MOVE, calculateAttackVector)),
     ));
@@ -190,6 +191,7 @@ export class TurnEffects {
         this.store.select(selectSpells),
         this.store.select(selectTurn),
         this.store.select(selectAttack),
+        this.store.select(selectFighters),
       ),
       map(this.battleService.executionSpells(STAGE.AFTER_MOVE, executeHit)),
     ));

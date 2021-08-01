@@ -3,11 +3,12 @@ import { Injectable } from '@angular/core';
 import { Actions, createEffect, CreateEffectMetadata, ofType } from '@ngrx/effects';
 import { Store } from '@ngrx/store';
 
-import { map, mergeMap, withLatestFrom } from 'rxjs/operators';
+import { mergeMap, withLatestFrom } from 'rxjs/operators';
 
 import { MOVE_STATUSES } from '../../constants/move-statuses.enum';
 import { findNextFighter } from '../../helpers/find-next-fighter.helper';
 import { resetAttackVectors } from '../attackVectors/attack-vectors.actions';
+import { resetDamage } from '../damage/damage.actions';
 import { reduceSpellExpiration } from '../spells/spells.actions';
 import { turnChangeNextFighter, turnCompleted } from '../turn/turn.actions';
 import { selectTurn } from '../turn/turn.selectors';
@@ -27,7 +28,10 @@ export class FightersEffects {
   private applySpellToCharacterFn$(): CreateEffectMetadata {
     return createEffect(() => this.actions$.pipe(
       ofType(applySpellToCharacter),
-      map(action => reduceSpellExpiration({ spellId: action.spell.id })),
+      mergeMap(action => [
+        reduceSpellExpiration({ spellId: action.damage.spellId }),
+        resetDamage(),
+      ]),
     ));
   }
 
@@ -53,6 +57,7 @@ export class FightersEffects {
             }),
             turnChangeNextFighter({ nextFighterId: nextFighter.id, nextPartyId: nextFighter.partyId }),
             resetAttackVectors(),
+            resetDamage(),
           ];
         }
 
@@ -64,6 +69,7 @@ export class FightersEffects {
           }),
           turnCompleted(),
           resetAttackVectors(),
+          resetDamage(),
         ];
       }),
     ));
