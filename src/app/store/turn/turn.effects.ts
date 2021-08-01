@@ -4,7 +4,7 @@ import { Router } from '@angular/router';
 import { Actions, createEffect, CreateEffectMetadata, ofType } from '@ngrx/effects';
 import { Store } from '@ngrx/store';
 
-import { delay, map, switchMap, tap, withLatestFrom } from 'rxjs/operators';
+import { map, switchMap, tap, withLatestFrom } from 'rxjs/operators';
 
 import { DEFAULT_TURN } from '../../constants/default-turn.constant';
 import { STATUSES } from '../../constants/statuses.enum';
@@ -23,7 +23,7 @@ import {
   resetMoveStatus,
   restoreFighterAfterSpell,
 } from '../fighters/fighters.actions';
-import { selectCharacters, selectCPUCharacter, selectParties, selectPlayerCharacter } from '../fighters/fighters.selectors';
+import { selectCharacters, selectCPUCharacter, selectFighters, selectParties, selectPlayerCharacter } from '../fighters/fighters.selectors';
 import {
   executeHit,
   executeSpellsAfterMove,
@@ -154,6 +154,7 @@ export class TurnEffects {
         this.store.select(selectSpells),
         this.store.select(selectTurn),
         this.store.select(selectAttack),
+        this.store.select(selectFighters),
       ),
       map(this.battleService.executionSpells(STAGE.BEFORE_MOVE, calculateAttackVector)),
     ));
@@ -190,6 +191,7 @@ export class TurnEffects {
         this.store.select(selectSpells),
         this.store.select(selectTurn),
         this.store.select(selectAttack),
+        this.store.select(selectFighters),
       ),
       map(this.battleService.executionSpells(STAGE.AFTER_MOVE, executeHit)),
     ));

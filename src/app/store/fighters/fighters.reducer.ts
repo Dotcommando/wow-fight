@@ -5,12 +5,10 @@ import { UUID } from 'angular2-uuid';
 
 import { MOVE_STATUSES } from '../../constants/move-statuses.enum';
 import { NAMES } from '../../constants/name.enum';
-import { GAME_SETTINGS, PRIORITY_QUERY } from '../../constants/settings.constant';
 import { ALL_SPELLS } from '../../constants/spells.constant';
 import { SPELLS } from '../../constants/spells.enum';
 import { STATUSES } from '../../constants/statuses.enum';
 import { createBeast, createCharacter } from '../../helpers/create-character.helper';
-import { ICastedSpell } from '../../models/casted-spell.interface';
 import { IBeastCharacter, IMainCharacter, InstanceOf } from '../../models/character.type';
 import {
   applyHit,
@@ -135,56 +133,19 @@ const fightersReducerFn = createReducer(
     },
   ),
   on(applySpellToCharacter,
-    (state: IFightersState, { fighterId, spell }: { fighterId: string; spell: ICastedSpell }) => {
-      const fighter = { ...state.entities[fighterId] };
-      const spellEntity = ALL_SPELLS.find(spellFromSpellsLIst => spellFromSpellsLIst.name === spell.spellName);
-
-      if (!fighter) throw new Error(`Cannot find fighter with id ${fighterId} in state, action 'applySpellToCharacter'.`);
-      if (!spellEntity) throw new Error(`Cannot find spell ${spell.spellName} in list of spells.`);
-      if (spell.expiredIn <= 0 || !fighter?.isAlive) {
+    (state: IFightersState, { damage }) => {
+      if (!damage.isSpell || (damage.isSpell && damage.isSkip)) {
         return state;
       }
 
-      const changes: Partial<InstanceOf<IMainCharacter | IBeastCharacter>> = {};
-
-      switch (spell.spellName) {
-        case SPELLS.ANCESTRAL_SPIRIT:
-          changes.hp = fighter.hp + spellEntity.HPDelta > fighter.inheritedHp
-            ? fighter.inheritedHp
-            : fighter.hp + spellEntity.HPDelta;
-
-          break;
-
-        case SPELLS.FILTH:
-          const hpResult = fighter.hp - spellEntity.HPDelta;
-
-          changes.hp = hpResult < 0
-            ? 0
-            : hpResult;
-
-          if (hpResult < 0) {
-            changes.isAlive = false;
-          }
-
-          break;
-
-        case SPELLS.FEAR:
-          changes.canNotAttack = spellEntity.canNotAttack;
-          changes.canNotCast = spellEntity.canNotCast;
-
-          break;
-
+      switch (damage.spellName) {
         case SPELLS.REBIRTH:
-          const skeletonPriority = GAME_SETTINGS.priority === PRIORITY_QUERY.LOWEST_FIRST
-            ? fighter.priority - 1
-            : fighter.priority + 1;
-
           return adapter.addOne(
             createBeast(
-              NAMES.SKELETON,
-              fighter.partyId,
-              skeletonPriority,
-              fighter.status === STATUSES.PLAYER ? STATUSES.PLAYERS_BEAST : STATUSES.CPUS_BEAST,
+              damage.beastParams.beastName,
+              damage.beastParams.partyId,
+              damage.beastParams.priority,
+              damage.beastParams.status,
             ),
             state);
 
@@ -192,7 +153,7 @@ const fightersReducerFn = createReducer(
           break;
       }
 
-      return adapter.updateOne({ id: spell.target, changes }, state);
+      return adapter.updateOne({ id: damage.target, changes: damage.targetChanges }, state);
     },
   ),
   on(applyHit,
